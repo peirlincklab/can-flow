@@ -116,8 +116,11 @@ for sub_dir_name in range(1331):
     try:
         dir_name = f"./Dataset/{sub_dir_name}"
         if not Path(f"{dir_name}/latent.csv").exists():
-            mri_pth = f"{mri_pth}/LR_ED.nii.gz"
+            mri_pth = f"{dir_name}/LR_ED.nii.gz"
             extract_latent(mri_pth)
+
     except:
         pass
+
+
 
