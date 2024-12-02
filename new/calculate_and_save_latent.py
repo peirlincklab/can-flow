@@ -112,7 +112,7 @@ def extract_latent(path_to_mri: str):
 
 #|%%--%%| <bnuNcyzXzk|VdiQJAE2JH>
 
-for sub_dir_name in range(1331):
+for sub_dir_name in tqdm(range(1331)):
     try:
         dir_name = f"./Dataset/{sub_dir_name}"
         if not Path(f"{dir_name}/latent.csv").exists():
