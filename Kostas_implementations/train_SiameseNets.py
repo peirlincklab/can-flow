@@ -1,3 +1,4 @@
+import torch
 from SiameseNets import *
 from tqdm import tqdm
 from torch.utils.data import DataLoader
@@ -6,10 +7,22 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial import cKDTree
 from sklearn.manifold import TSNE
+import os
+
+
+def load_cp_momenta(file_name):
+
+    # Get the path to the Downloads folder dynamically
+    downloads_folder = os.path.join(os.path.expanduser("~"), "Downloads")
+
+    file_path = os.path.join(downloads_folder, file_name)
+    data = np.loadtxt(file_path)
+
+    return data
 
 
 def debug_visuals(dist):
-    z_latent = dist.mean.detach().numpy()
+    z_latent = dist.mean.detach().cpu().numpy()
 
     z_embedded = TSNE(n_components=2, learning_rate='auto',
                       init='random', perplexity=3).fit_transform(z_latent)
@@ -62,15 +75,19 @@ def visualization(num_neighbors, x_pred, x_ref, title_pred, title_ref):
     plt.show()
 
 
-def generate_synthetic_data(vae, num_samples, latent_dim):
+def generate_synthetic_data(vae, num_samples, latent_dim, ensemble=False):
     vae.eval()
     with torch.no_grad():
         dist = torch.distributions.MultivariateNormal(
-            torch.zeros(latent_dim), torch.eye(latent_dim)
+            torch.zeros(latent_dim, device=device), torch.eye(latent_dim, device=device)
         )
 
         z_samples = dist.sample((num_samples,))
-        synthetic_data = vae.decoder(z_samples)
+        z_samples = z_samples.to(device)
+        if ensemble:
+            synthetic_data = vae.generation(z_samples)
+        else:
+            synthetic_data = vae.decoder(z_samples)
     return synthetic_data
 
 
@@ -91,7 +108,7 @@ def chamfer_distance(point_cloud1, point_cloud2):
     distances2, _ = tree2.query(point_cloud1, k=1)
 
     # Average the distances
-    chamfer = np.mean(distances1 ** 2) + np.mean(distances2 ** 2)
+    chamfer = np.mean(distances1 * 2) + np.mean(distances2 * 2)
     return chamfer
 
 
@@ -137,12 +154,14 @@ class Data(data.Dataset):
 # Configurations of the run
 ############
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
 
 batch_size_frac = 0.4 ### 0.15
 num_dense = 2730
 frac_train = 0.9
 frac_valid = 0.05
-epochs = 7 ### 2000
+epochs = 500 ### 2000
 lrate = 4e-4
 
 latent_dimension = 32
@@ -157,11 +176,12 @@ NumTestSamples = 456 - NumTrainSamples - NumValidSamples
 ############
 
 
-control_points = np.loadtxt(
-    "/Users/konstantinoskevopoulos/Downloads/cardiac_atlas_kostas/output/DeterministicAtlas__EstimatedParameters__ControlPoints.txt")
+file_name_cp = "cardiac_atlas_kostas\output\DeterministicAtlas__EstimatedParameters__ControlPoints.txt"
 
-momenta = np.loadtxt(
-    "/Users/konstantinoskevopoulos/Downloads/cardiac_atlas_kostas/output/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+file_name_momenta = "cardiac_atlas_kostas\output\DeterministicAtlas__EstimatedParameters__Momenta.txt"
+
+control_points = load_cp_momenta(file_name_cp)
+momenta = load_cp_momenta(file_name_momenta)
 
 
 momenta = np.delete(momenta, 0, axis=0)
@@ -178,136 +198,31 @@ train_loader = DataLoader(dataset=dataset_train, batch_size=int(batch_size_frac 
 valid_loader = DataLoader(dataset=dataset_valid, batch_size=int(batch_size_frac * NumValidSamples), shuffle=False)
 
 
-siamese_vaes = []
-############
-# 1st VAE: beta = 0
-############
-
-siamese_vae = SiameseVAE(latent_dim=latent_dimension)
+siamese_vae = SiameseVAE(latent_dim=latent_dimension).to(device)
 
 optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
 
 trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
                          train_loader=train_loader, valid_loader=valid_loader)
 
-siamese_vaes.append(trainer.training(anneal=False, beta=0))
+model = trainer.training(anneal=False, beta=5e-3)
 
 
-############
-# 2nd VAE: beta = 1.5
-############
+model.eval()
+
+X_train_momenta = torch.tensor(X_train_momenta, dtype=torch.float32, device=device)
+reconstruction_train, dist_train = model(X_train_momenta)
+debug_visuals(dist_train)
+
+reconstruction_train = reconstruction_train.reshape(NumTrainSamples, num_dense, 3).detach().cpu().numpy()
 
 
-siamese_vae = SiameseVAE(latent_dim=latent_dimension)
+## Denormalize the reconstructed deformed control points of the training set
+X_test_momenta = torch.tensor(X_test_momenta, dtype=torch.float32, device=device)
+reconstruction_test, dist_test = model(X_test_momenta)
+reconstruction_test = reconstruction_test.reshape(NumTestSamples, num_dense, 3).detach().cpu().numpy()
 
-optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
-
-trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
-                         train_loader=train_loader, valid_loader=valid_loader)
-
-siamese_vaes.append(trainer.training(anneal=False, beta=1.5))
-
-
-############
-# 3rd VAE: beta = 4e-4
-############
-
-siamese_vae = SiameseVAE(latent_dim=latent_dimension)
-
-optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
-
-trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
-                         train_loader=train_loader, valid_loader=valid_loader)
-
-siamese_vaes.append(trainer.training(anneal=False, beta=4e-4))
-
-############
-# 4th VAE: beta = annealing
-############
-
-siamese_vae = SiameseVAE(latent_dim=latent_dimension)
-
-optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
-
-trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
-                         train_loader=train_loader, valid_loader=valid_loader)
-
-siamese_vaes.append(trainer.training(anneal=True, beta=None))
-
-
-############
-# Optimize the ensemble weights
-############
-
-weights = torch.nn.Parameter(torch.ones(len(siamese_vaes)) / len(siamese_vaes), requires_grad=True)
-
-optimizer_w = torch.optim.Adam([weights], lr=0.01)
-
-ensemble_siamese = EnsembleVAE(vae_models=siamese_vaes)
-
-trainer_ensemble = TrainerEnsembleVAE(model=ensemble_siamese, weights=weights, epochs=epochs, optimizer=optimizer_w,
-                                      train_loader=train_loader, valid_loader=valid_loader)
-
-weights = trainer_ensemble.training()
-
-
-reconstruction_tests = []
-for model in siamese_vaes:
-
-    model.eval()
-    reconstruction_test, _ = model(torch.tensor(X_test_momenta, dtype=torch.float32))
-    reconstruction_test = reconstruction_test.reshape(NumTestSamples, num_dense, 3).detach().numpy()
-    reconstruction_tests.append(reconstruction_test)
-
-    X_test_momenta = X_test_momenta.reshape(NumTestSamples, num_dense, 3)
-
-    X_test_deformed = np.array(
-        [control_points[:num_dense, :] + X_test_momenta[i] for i in range(X_test_momenta.shape[0])])
-
-    ### TODO: check this
-    reconstruction_ensemble = weights[0] * 1
-
-    print(weights)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Evaluation phase
-# siamese_vae.eval()
-#
-# _, dist_train = siamese_vae(torch.tensor(X_train_momenta, dtype=torch.float32))
-# debug_visuals(dist_train)
-
-
-### Denormalize the reconstructed deformed control points of the training set
-reconstruction_test, dist_test = siamese_vae(torch.tensor(X_test_momenta, dtype=torch.float32))
-reconstruction_test = reconstruction_test.reshape(NumTestSamples, num_dense, 3).detach().numpy()
-
-X_test_momenta = X_test_momenta.reshape(NumTestSamples, num_dense, 3)
+X_test_momenta = X_test_momenta.reshape(NumTestSamples, num_dense, 3).detach().cpu().numpy()
 
 
 X_test_deformed = np.array([control_points[:num_dense, :] + X_test_momenta[i] for i in range(X_test_momenta.shape[0])])
@@ -318,8 +233,8 @@ reconstruction_deformed = np.array([control_points[:num_dense, :] + reconstructi
 cd_err_batch = Chamfer_distance_batch(reconstruction_deformed, X_test_deformed)
 print(f"Chamfer distance test: {cd_err_batch}")
 
-synthetic_momenta = generate_synthetic_data(vae=siamese_vae, latent_dim=latent_dimension, num_samples=10)
-synthetic_momenta = synthetic_momenta.reshape(10, num_dense, 3).detach().numpy()
+synthetic_momenta = generate_synthetic_data(vae=model, latent_dim=latent_dimension, num_samples=10)
+synthetic_momenta = synthetic_momenta.reshape(10, num_dense, 3).detach().cpu().numpy()
 
 synthetic_shapes = np.array([control_points[:num_dense, :] + synthetic_momenta[i] for i in range(synthetic_momenta.shape[0])])
 
@@ -349,3 +264,170 @@ for i in range(synthetic_shapes.shape[0]):
 for i in range(X_test_deformed.shape[0]):
     visualization(num_neighbors=8, x_pred=reconstruction_deformed[i], x_ref=X_test_deformed[i], title_pred="Predicted",
                   title_ref="Reference")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# siamese_vaes = []
+# ############
+# # 1st VAE: beta = 0.01
+# ############
+#
+# siamese_vae = SiameseVAE(latent_dim=latent_dimension).to(device)
+#
+# optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
+#
+# trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
+#                          train_loader=train_loader, valid_loader=valid_loader)
+#
+# siamese_vaes.append(trainer.training(anneal=False, beta=5e-3))
+#
+#
+# ############
+# # 2nd VAE: beta = 0.02
+# ############
+#
+#
+# siamese_vae = SiameseVAE(latent_dim=latent_dimension).to(device)
+#
+# optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
+#
+# trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
+#                          train_loader=train_loader, valid_loader=valid_loader)
+#
+# siamese_vaes.append(trainer.training(anneal=False, beta=5e-3))
+#
+#
+# ############
+# # 3rd VAE: beta = 4e-3
+# ############
+#
+# siamese_vae = SiameseVAE(latent_dim=latent_dimension).to(device)
+#
+# optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
+#
+# trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
+#                          train_loader=train_loader, valid_loader=valid_loader)
+#
+# siamese_vaes.append(trainer.training(anneal=False, beta=5e-3))
+#
+# ############
+# # 4th VAE: beta = annealing
+# ############
+#
+# siamese_vae = SiameseVAE(latent_dim=latent_dimension).to(device)
+#
+# optimizer = torch.optim.Adam(siamese_vae.parameters(), lr=lrate)
+#
+# trainer = TrainerSiamese(model=siamese_vae, optimizer=optimizer, epochs=epochs,
+#                          train_loader=train_loader, valid_loader=valid_loader)
+#
+# siamese_vaes.append(trainer.training(anneal=False, beta=5e-3))
+#
+#
+# ############
+# # Optimize the ensemble weights
+# ############
+#
+# ensemble_siamese = EnsembleVAE(vae_models=siamese_vaes).to(device)
+#
+# optimizer_w = torch.optim.Adam(ensemble_siamese.parameters(), lr=0.004)
+#
+# trainer_ensemble = TrainerEnsembleVAE(model=ensemble_siamese, epochs=epochs, optimizer=optimizer_w,
+#                                       train_loader=train_loader, valid_loader=valid_loader)
+#
+# ensemble_siamese = trainer_ensemble.training(anneal=False, beta=5e-3)
+# trainer_ensemble.plot_losses()
+#
+#
+# ### Evaluation phase
+# ensemble_siamese.eval()
+#
+# reconstruction_train, dist_train = ensemble_siamese(torch.tensor(X_train_momenta, dtype=torch.float32))
+# debug_visuals(dist_train)
+#
+# reconstruction_train = reconstruction_train.reshape(NumTrainSamples, num_dense, 3).detach().cpu().numpy()
+#
+#
+# ## Denormalize the reconstructed deformed control points of the training set
+# reconstruction_test, dist_test = ensemble_siamese(torch.tensor(X_test_momenta, dtype=torch.float32))
+# reconstruction_test = reconstruction_test.reshape(NumTestSamples, num_dense, 3).detach().cpu().numpy()
+#
+# X_test_momenta = X_test_momenta.reshape(NumTestSamples, num_dense, 3)
+#
+#
+# X_test_deformed = np.array([control_points[:num_dense, :] + X_test_momenta[i] for i in range(X_test_momenta.shape[0])])
+# reconstruction_deformed = np.array([control_points[:num_dense, :] + reconstruction_test[i]
+#                                     for i in range(reconstruction_test.shape[0])])
+#
+#
+# cd_err_batch = Chamfer_distance_batch(reconstruction_deformed, X_test_deformed)
+# print(f"Chamfer distance test: {cd_err_batch}")
+#
+# synthetic_momenta = generate_synthetic_data(vae=ensemble_siamese, latent_dim=latent_dimension, num_samples=10, ensemble=True)
+# synthetic_momenta = synthetic_momenta.reshape(10, num_dense, 3).detach().cpu().numpy()
+#
+# synthetic_shapes = np.array([control_points[:num_dense, :] + synthetic_momenta[i] for i in range(synthetic_momenta.shape[0])])
+#
+#
+# for i in range(synthetic_shapes.shape[0]):
+#     fig = plt.figure(figsize=(8, 8))
+#     nbrs = NearestNeighbors(n_neighbors=8).fit(synthetic_shapes[i])
+#     ax = plt.axes(projection='3d')
+#     distances, _ = nbrs.kneighbors(synthetic_shapes[i])
+#     density = 1 / distances[:, -1]
+#     density_normalized = (density - density.min()) / (density.max() - density.min())
+#     x = synthetic_shapes[i, :, 0]
+#     y = synthetic_shapes[i, :, 1]
+#     z = synthetic_shapes[i, :, 2]
+#     plot1 = ax.scatter(x, y, z, c=density_normalized, cmap="inferno", s=50)
+#     cb1 = fig.colorbar(plot1, ax=ax, shrink=0.6)
+#     cb1.set_label('Density')
+#     ax.set_xlabel('X')
+#     ax.set_ylabel('Y')
+#     ax.set_zlabel('Z')
+#     # ax.set_title(f" Synthetic Patient {i} \n \nsex:{metadata_vector[0]} "
+#     #              f"\nBMI: {metadata_vector[1]} "
+#     #              f"\nAge: {metadata_vector[2]}")
+#
+#     plt.show()
+#
+# for i in range(X_test_deformed.shape[0]):
+#     visualization(num_neighbors=8, x_pred=reconstruction_deformed[i], x_ref=X_test_deformed[i], title_pred="Predicted",
+#                   title_ref="Reference")
