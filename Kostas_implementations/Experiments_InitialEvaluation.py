@@ -99,7 +99,7 @@ def visualization(num_neighbors, x_pred, x_ref, title_pred, title_ref):
     plt.show()
 
 
-def generate_synthetic_data(vae, num_samples, latent_dim, conf_info, conf_encoder):
+def generate_synthetic_data(vae, num_samples, latent_dim, conf_info):
 
     conf_info = np.tile(conf_info, (num_samples, 1))
     conf_info = torch.tensor(conf_info, dtype=torch.float32).to(device)
@@ -111,8 +111,6 @@ def generate_synthetic_data(vae, num_samples, latent_dim, conf_info, conf_encode
         )
 
         z_samples = dist.sample((num_samples,))
-
-        conf_info = conf_encoder(conf_info)
 
         z_samples_concat = torch.cat((z_samples, conf_info), dim=1)
 
@@ -246,6 +244,7 @@ x_confounders.drop(['BSA', 'Year of birth', 'Height', 'Weight', 'Diastolic BP me
 x_confounders['Sex'] = x_confounders['Sex'].replace({'Male': 0, 'Female': 1})
 x_confounders = x_confounders.to_numpy()
 
+x_confounders = x_confounders[:, 1:]
 
 
 momenta = np.delete(momenta, 0, axis=0)
@@ -265,25 +264,22 @@ for i in range(momenta.shape[0]):
 
 momenta = np.concatenate((momenta, density_feature), axis=-1)
 
-
 X_train_momenta = momenta[:NumTrainSamples, :, :].reshape((NumTrainSamples, 4, 13, 14, 15))
 X_valid_momenta = momenta[NumTrainSamples:NumTrainSamples + NumValidSamples, :, :].reshape((NumValidSamples, 4, 13, 14, 15))
 X_test_momenta = momenta[NumTrainSamples + NumValidSamples:, :, :].reshape((NumTestSamples, 4, 13, 14, 15))
 
 
+X_train_confounders = minmax_scale(x_confounders[:NumTrainSamples, :], axis=0)
+X_valid_confounders = minmax_scale(x_confounders[NumTrainSamples:NumTrainSamples+NumValidSamples, :], axis=0)
+X_test_confounders = minmax_scale(x_confounders[NumTrainSamples+NumValidSamples:, :], axis=0)
 
-X_train_confounders = minmax_scale(x_confounders[:NumTrainSamples, 1:], axis=0)
-X_valid_confounders = minmax_scale(x_confounders[NumTrainSamples:NumTrainSamples+NumValidSamples, 1:], axis=0)
-X_test_confounders = minmax_scale(x_confounders[NumTrainSamples+NumValidSamples:, 1:], axis=0)
 
 model = torch.load("model.pth")
-metadata_encoder = torch.load("metadata_encoder.pth")
 
 x_test_confounder_female = [1.0, 0.52473, 0.19999]
-x_test_confounder_male = [0.0, 0.52473, 0.19999]
+# x_test_confounder_male = [0.0, 0.52473, 0.19999]
 
 model.eval()
-metadata_encoder.eval()
 
 x_train = torch.tensor(X_train_momenta, dtype=torch.float32).to(device)
 x_train_conf = torch.tensor(X_train_confounders, dtype=torch.float32).to(device)
@@ -297,13 +293,13 @@ x_test_conf = torch.tensor(X_test_confounders, dtype=torch.float32).to(device)
 
 
 synthetic_momenta = generate_synthetic_data(vae=model, latent_dim=latent_dimension, num_samples=NumSynthetic,
-                                            conf_info=x_test_confounder_female, conf_encoder=metadata_encoder)
+                                            conf_info=x_test_confounder_female)
 
 
 
-reconstruction_train, dist_train, _ = model(x_train, x_train_conf)
-reconstruction_valid, _, _ = model(x_valid, x_valid_conf)
-reconstruction_test, _, _ = model(x_test, x_test_conf)
+reconstruction_train, dist_train = model(x_train, x_train_conf)
+reconstruction_valid = model(x_valid, x_valid_conf)
+reconstruction_test = model(x_test, x_test_conf)
 
 reconstruction_train = reconstruction_train.reshape(NumTrainSamples, num_dense, 4).detach().cpu().numpy()
 reconstruction_train = reconstruction_train[:, :, :3]
@@ -324,7 +320,7 @@ reconstructed_momenta = np.concatenate((reconstruction_train, reconstruction_val
 
 
 # save_momenta(type_momenta="Predicted", momenta_vae=reconstructed_momenta)
-save_momenta(type_momenta="Generated_female", momenta_vae=synthetic_momenta)
+# save_momenta(type_momenta="Generated_female_additional_reconstructmetadata", momenta_vae=synthetic_momenta)
 
 
 debug_visuals(dist_train)

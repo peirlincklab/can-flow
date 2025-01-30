@@ -6,25 +6,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# class MetadataEncoder(nn.Module):
-#     def __init__(self):
-#         super(MetadataEncoder, self).__init__()
-#
-#         self.fc1 = nn.Linear(in_features=3, out_features=9).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
-#
-#     def forward(self, x):
-#
-#         x = F.gelu(self.fc1(x))
-#
-#         return x
-
-
-
 class ConvEncoder(nn.Module):
     def __init__(self, latent_dim):
         super(ConvEncoder, self).__init__()
 
-        self.conv1 = nn.Conv3d(in_channels=7, out_channels=64, kernel_size=(5, 4, 3), stride=2).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+        self.conv1 = nn.Conv3d(in_channels=4, out_channels=64, kernel_size=(5, 4, 3), stride=2).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         self.conv2 = nn.Conv3d(in_channels=64, out_channels=128, kernel_size=(4, 3, 2), stride=1).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
         self.bn1 = nn.BatchNorm3d(64)
@@ -33,19 +19,14 @@ class ConvEncoder(nn.Module):
         self.flatten = nn.Flatten().to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         self.softplus = nn.Softplus().to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
-        self.fc_mean_logvar = nn.Linear(128 * 2 * 4 * 6 + 9, 2 * latent_dim).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+        self.fc_mean_logvar = nn.Linear(128 * 2 * 4 * 6, 2 * latent_dim).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
-    def forward(self, x, x_conf, metadata_enc, eps=1e-8):
-        metadata_encoder = metadata_enc
+    def forward(self, x, eps=1e-8):
 
         x = F.gelu(self.conv1(x))
         x = F.gelu(self.conv2(x))
 
         x = self.flatten(x)
-
-        x_conf = metadata_encoder(x_conf)
-
-        x = torch.cat((x, x_conf), dim=1)
 
         z_mean_logvar = self.fc_mean_logvar(x)
 
@@ -61,7 +42,7 @@ class ConvDecoder(nn.Module):
     def __init__(self, latent_dim):
         super(ConvDecoder, self).__init__()
 
-        self.fc = nn.Linear(latent_dim + 9, 128 * 2 * 4 * 6).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+        self.fc = nn.Linear(latent_dim + 3, 128 * 2 * 4 * 6).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
         self.deconv1 = nn.ConvTranspose3d(in_channels=128, out_channels=64, kernel_size=(4, 3, 2), stride=1).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         self.deconv2 = nn.ConvTranspose3d(in_channels=64, out_channels=4, kernel_size=(5, 4, 3), stride=2).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
@@ -87,29 +68,25 @@ class ConvVAE(nn.Module):
         self.encoder = ConvEncoder(latent_dim).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         self.decoder = ConvDecoder(latent_dim).to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
-        self.metadata_enc = MetadataEncoder().to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
-
     def reparameterize(self, dist):
 
         return dist.rsample()
 
     def forward(self, x, x_conf):
 
-        dist = self.encoder(x, x_conf, self.metadata_enc)
+        dist = self.encoder(x)
 
         z = self.reparameterize(dist)
-
-        x_conf = self.metadata_enc(x_conf)
 
         z_concat = torch.cat((z, x_conf), dim=1)
 
         x_reconstruct = self.decoder(z_concat)
 
-        return x_reconstruct, dist, self.metadata_enc
+        return x_reconstruct, dist
 
 
 class TrainerConvVAE:
-    def __init__(self, model, optimizer, epochs, train_loader, valid_loader):
+    def __init__(self, model, optimizer, epochs, train_loader, valid_loader, latent_dim):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -128,14 +105,17 @@ class TrainerConvVAE:
         self.ValidRecon_MeanBatch_Epochs = []
         self.ValidKL_MeanBatch_Epochs = []
 
+        self.latent_dimension = latent_dim
+
     def loss_function(self, prediction, reference, dist, beta):
 
         r_loss_func = nn.MSELoss()
-        loss_recon = r_loss_func(prediction.to(self.device), reference.to(self.device))
-        std_normal = torch.distributions.MultivariateNormal(
-            torch.zeros(16, device=self.device), torch.eye(16, device=self.device)
-        )
 
+        loss_recon = r_loss_func(prediction[:, :3, :, :, :].to(self.device), reference[:, :3, :, :, :].to(self.device))
+
+        std_normal = torch.distributions.MultivariateNormal(
+            torch.zeros(self.latent_dimension, device=self.device), torch.eye(self.latent_dimension, device=self.device)
+        )
 
         loss_kl = torch.distributions.kl.kl_divergence(dist, std_normal).mean()
 
@@ -171,7 +151,7 @@ class TrainerConvVAE:
                 self.optimizer.zero_grad()
 
                 ### Forward propagation. Inputs to VAE are the batch of point clouds and the patient metadata
-                prediction, dist, metadata_encoder = self.model(x_train, x_confounders)
+                prediction, dist = self.model(x_train, x_confounders)
 
                 loss_train, loss_recon, kl_loss = self.loss_function(prediction=prediction,
                                                                      reference=x_train,
@@ -204,7 +184,7 @@ class TrainerConvVAE:
                     x_valid = x_valid.to(self.device)
                     x_confounders_valid = x_confounders_valid.to(self.device)
 
-                    prediction_valid, dist_valid, _ = self.model(x_valid, x_confounders_valid)
+                    prediction_valid, dist_valid = self.model(x_valid, x_confounders_valid)
 
                     loss_valid, loss_recon_valid, loss_kl_valid = self.loss_function(prediction=prediction_valid,
                                                                                      reference=x_valid,
@@ -252,7 +232,7 @@ class TrainerConvVAE:
         plt.ylabel("Frequency")
         plt.show()
 
-        return self.model, metadata_encoder
+        return self.model
 
     def plot_losses(self):
 
