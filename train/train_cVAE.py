@@ -34,9 +34,9 @@ scaler = MinMaxScaler()
 batch_size_frac = 0.15
 frac_train = 0.7
 frac_valid = 0.15
-epochs = 2000
+epochs = 4000
 lrate = 2e-4
-beta = 10
+beta = 1e-7
 
 NumAll = 2274
 NumTrainSamples = int(NumAll * frac_train)
