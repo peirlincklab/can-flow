@@ -36,7 +36,7 @@ frac_train = 0.7
 frac_valid = 0.15
 epochs = 2000
 lrate = 2e-4
-beta = 1e-7
+beta = 10
 
 NumAll = 2274
 NumTrainSamples = int(NumAll * frac_train)
