@@ -123,7 +123,7 @@ class AffineInjector(nn.Module):
             nn.Linear(20, 60),
             activation,
             nn.Linear(60, out_dim)
-        )
+        ).to('cuda')
 
         self.aff_inj_t = nn.Sequential(
             nn.Linear(4, 20),
@@ -131,7 +131,7 @@ class AffineInjector(nn.Module):
             nn.Linear(20, 60),
             activation,
             nn.Linear(60, out_dim)
-        )
+        ).to('cuda')
 
         def init_weights_zero(m):
             if isinstance(m, nn.Linear):
@@ -391,7 +391,7 @@ class FlowHeart(nn.Module):
 class TrainerNF:
     def __init__(self, model, optimizer, epochs, train_loader, valid_loader, latent_dim):
 
-        self.device = torch.device('cpu')
+        self.device = torch.device('cuda')
 
         self.model = model
         self.optimizer = optimizer

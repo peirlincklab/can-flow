@@ -28,7 +28,8 @@ class Data(data.Dataset):
 scaler = MinMaxScaler()
 
 
-x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
+#x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
+x_confounders = pd.read_excel(r"/home/kostas/home/metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
 x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
@@ -80,8 +81,9 @@ norm_flow = FlowHeart(in_dim=dim_latent, out_dim=dim_latent, n_flow=15, in_dim_c
 optimizer = torch.optim.Adam(norm_flow.parameters(), lr=lrate, weight_decay=1e-5)
 
 
-trainer = TrainerNF(model=norm_flow, optimizer=optimizer, epochs=epochs,
-                         train_loader=train_loader, valid_loader=valid_loader, latent_dim=dim_latent)
+trainer = TrainerNF(model=norm_flow, optimizer=optimizer, epochs=epochs, 
+                    train_loader=train_loader, valid_loader=valid_loader, 
+                    latent_dim=dim_latent)
 
 
 norm_flow = trainer.training()

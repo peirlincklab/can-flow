@@ -41,7 +41,7 @@ NumValidSamples = int(NumSamples * frac_valid)
 NumTestSamples = NumSamples - NumTrainSamples - NumValidSamples
 
 
-momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
@@ -71,7 +71,7 @@ trainer = TrainerAE(model=Convol_ae, optimizer=optimizer, epochs=epochs,
 Convol_ae = trainer.training()
 trainer.plot_losses()
 
-torch.save(Convol_ae, "../data_models_saved/models/ae_model.pth")
-torch.save(Convol_ae.encoder, "../data_models_saved/models/ae_encoder.pth")
-torch.save(Convol_ae.decoder, "../data_models_saved/models/ae_decoder.pth")
+torch.save(Convol_ae, "data_models_saved/models/ae_model.pth")
+torch.save(Convol_ae.encoder, "data_models_saved/models/ae_encoder.pth")
+torch.save(Convol_ae.decoder, "data_models_saved/models/ae_decoder.pth")
 
