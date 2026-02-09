@@ -113,6 +113,9 @@ metadata_sampled_male = torch.tensor(metadata_sampled_male, dtype=torch.float32)
 ae_decoder = torch.load("../data_models_saved/models/ae_decoder.pth", weights_only=False)
 cnf = torch.load("../data_models_saved/models/cnf_model.pth", weights_only=False)
 
+cvae10 = torch.load("../data_models_saved/models/cvae_decoder_beta_10.pth", weights_only=False)
+cvae1 = torch.load("../data_models_saved/models/cvae_decoder_beta_1.pth", weights_only=False)
+cvae2 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.01.pth", weights_only=False)
 cvae3 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.001.pth", weights_only=False)
 cvae4 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.0001.pth", weights_only=False)
 cvae5 = torch.load("../data_models_saved/models/cvae_decoder_beta_1e-05.pth", weights_only=False)
@@ -122,6 +125,9 @@ cvae7 = torch.load("../data_models_saved/models/cvae_decoder_beta_1e-07.pth", we
 ae_decoder.eval()
 cnf.eval()
 
+cvae10.eval()
+cvae1.eval()
+cvae2.eval()
 cvae3.eval()
 cvae4.eval()
 cvae5.eval()
@@ -131,8 +137,8 @@ cvae7.eval()
 
 
 
-models_str = ['nf', 'vae3', 'vae4', 'vae5', 'vae6', 'vae7']
-models = [cnf, cvae3, cvae4, cvae5, cvae6, cvae7]
+models_str = ['nf', 'vae10', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6', 'vae7']
+models = [cnf, cvae10, cvae1, cvae2, cvae3, cvae4, cvae5, cvae6, cvae7]
 
 
 for str, mod in zip(models_str, models):

@@ -172,7 +172,7 @@ path_generated = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies"
 ### First experiment
 ### For ALL generative models, we perform the PCA experiment, measure WDs and visualize them
 ### For the VAEs, we follow the ordering of "generate_momenta_general.py" file
-models = ['nf', 'vae3', 'vae4', 'vae5', 'vae6', 'vae7']
+models = ['nf', 'vae10', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6', 'vae7']
 
 
 ### For the real variability --> Split the real dataset randomly 5 times, to account for the splitting stochasticity
@@ -234,15 +234,21 @@ for i in range(num_splits):
 
 
 cnf_results = np.stack([wd_allruns_dict[f"run_{i}"][0] for i in range(num_splits)])
-cvae3_results = np.stack([wd_allruns_dict[f"run_{i}"][1] for i in range(num_splits)])
-cvae4_results = np.stack([wd_allruns_dict[f"run_{i}"][2] for i in range(num_splits)])
-cvae5_results = np.stack([wd_allruns_dict[f"run_{i}"][3] for i in range(num_splits)])
-cvae6_results = np.stack([wd_allruns_dict[f"run_{i}"][4] for i in range(num_splits)])
-cvae7_results = np.stack([wd_allruns_dict[f"run_{i}"][5] for i in range(num_splits)])
-real_results = np.stack([wd_allruns_dict[f"run_{i}"][6] for i in range(num_splits)])
+cvae10_results = np.stack([wd_allruns_dict[f"run_{i}"][1] for i in range(num_splits)])
+cvae1_results = np.stack([wd_allruns_dict[f"run_{i}"][2] for i in range(num_splits)])
+cvae2_results = np.stack([wd_allruns_dict[f"run_{i}"][3] for i in range(num_splits)])
+cvae3_results = np.stack([wd_allruns_dict[f"run_{i}"][4] for i in range(num_splits)])
+cvae4_results = np.stack([wd_allruns_dict[f"run_{i}"][5] for i in range(num_splits)])
+cvae5_results = np.stack([wd_allruns_dict[f"run_{i}"][6] for i in range(num_splits)])
+cvae6_results = np.stack([wd_allruns_dict[f"run_{i}"][7] for i in range(num_splits)])
+cvae7_results = np.stack([wd_allruns_dict[f"run_{i}"][8] for i in range(num_splits)])
+real_results = np.stack([wd_allruns_dict[f"run_{i}"][9] for i in range(num_splits)])
 
 ### Compute mean and std to visualize
 cnf_mean, cnf_std = compute_mean_std(cnf_results)
+cvae10_mean, cvae10_std = compute_mean_std(cvae10_results)
+cvae1_mean, cvae1_std = compute_mean_std(cvae1_results)
+cvae2_mean, cvae2_std = compute_mean_std(cvae2_results)
 cvae3_mean, cvae3_std = compute_mean_std(cvae3_results)
 cvae4_mean, cvae4_std = compute_mean_std(cvae4_results)
 cvae5_mean, cvae5_std = compute_mean_std(cvae5_results)
@@ -250,8 +256,9 @@ cvae6_mean, cvae6_std = compute_mean_std(cvae6_results)
 cvae7_mean, cvae7_std = compute_mean_std(cvae7_results)
 real_mean, real_std = compute_mean_std(real_results)
 
-results = [[cnf_mean, cnf_std], [cvae3_mean, cvae3_std], [cvae4_mean, cvae4_std],
-           [cvae5_mean, cvae5_std], [cvae6_mean, cvae6_std], [cvae7_mean, cvae7_std]]
+results = [[cnf_mean, cnf_std], [cvae10_mean, cvae10_std], [cvae1_mean, cvae1_std],
+           [cvae2_mean, cvae2_std], [cvae4_mean, cvae4_std], [cvae5_mean, cvae5_std],
+           [cvae6_mean, cvae6_std], [cvae7_mean, cvae7_std]]
 
 
 
@@ -264,26 +271,34 @@ plt.fill_between(np.arange(real_results.shape[1]), real_mean-real_std, real_mean
 
 for i in range(len(results)):
 
-    color = 'darkred'
-
     if i == 0:
-        color = 'tab:blue'
+        color = 'grey'
         label = 'CAN-DO'
     elif i == 1:
         color = 'darkred'
-        label = r'$\beta=10^{-3}$'
+        label = r'$\beta=10$'
     elif i == 2:
         color = 'green'
-        label = r'$\beta=10^{-4}$'
+        label = r'$\beta=10^{-1}$'
     elif i ==3:
-        color = 'yellow'
-        label = r'$\beta=10^{-5}$'
+        color = 'teal'
+        label = r'$\beta=10^{-2}$'
     elif i == 4:
         color = 'orange'
-        label = r'$\beta=10^{-6}$'
+        label = r'$\beta=10^{-3}$'
     elif i == 5:
         color = 'yellow'
-        label = r'$\beta=10^{-7}$'
+        label = r'$\beta=10^{-4}$'
+    elif i == 6:
+        color = 'red'
+        label = r'$\beta=10^{-5}$'
+    elif i == 7:
+        color = 'pink'
+        label = r'$\beta=10^{-6}$'
+    elif i == 8:
+        color = 'peru'
+        label= r'$\beta=10^{-7}$'
+
 
 
     plt.plot(results[i][0], color=color, label=label)
