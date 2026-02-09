@@ -24,7 +24,7 @@ font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceS
 font_prop = font_manager.FontProperties(fname=font_path)
 rcParams['font.family'] = font_prop.get_name()
 
-input_dir_general = r"..\data_models_saved\data\momenta2shape"
+input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies"
 
 models_dir = ['Female_gen_nf', 'Male_gen_nf',
               'Female_gen_vae1', 'Male_gen_vae1',

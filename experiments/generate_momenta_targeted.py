@@ -1,14 +1,13 @@
-### This file generates momenta for randomly sampled metadata vectors
-### This file does not generate momenta for any specific population sub-group
-### For female and male individuals, randomly sample sex and BMI values
-
-### Given the same sampled metadata, generate momenta for all generative models under investigation
-
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import  MinMaxScaler
 import torch
 import pandas as pd
 from utils import save_write_momenta
+
+### This file generates synthetic momenta, according to metadata from specific population subgroups
+### We manually define a population subgroup
+### From this group, we randomly sample some metadata vectors
+### And then we generate the corresponding momenta using the cNF and cVAE models
 
 
 def generate_momenta(model_str, model, sampled_metadata):
@@ -29,41 +28,34 @@ def generate_momenta(model_str, model, sampled_metadata):
     return generated_shapes
 
 
-def sample_metadata(num_samples, gender, x_confounders):
+def sample_metadata_targeted(num_samples, gen_age, gen_sex, x_confounders):
+    sex0 = gen_sex[0]
 
-    if gender == "Female":
-        sex1 = 1
-        sex2 = 0
-    else:
-        sex1 = 0
-        sex2 = 1
-
-    sex1_all = np.tile(sex1, num_samples).reshape(-1, 1)
-    sex2_all = np.tile(sex2, num_samples).reshape(-1, 1)
+    sex1_all = np.tile(gen_sex[0], num_samples).reshape(-1, 1)
+    sex2_all = np.tile(gen_sex[1], num_samples).reshape(-1, 1)
 
     gen_sex = np.concatenate((sex1_all, sex2_all), axis=1)
+    gen_age = np.tile(gen_age, num_samples).reshape(-1, 1)
 
-    indices = np.where(x_confounders[:, 2] == sex1)[0]
+    indices = np.where(x_confounders[:, 2] == sex0)[0]
 
     min_bmi = np.min(x_confounders[indices][:, 0])
     max_bmi = np.max(x_confounders[indices][:, 0])
-    min_age = np.min(x_confounders[indices][:, 1])
-    max_age = np.max(x_confounders[indices][:, 1])
 
     gen_bmi = np.random.uniform(low=min_bmi, high=max_bmi, size=num_samples).reshape(-1, 1)
-    gen_age = np.random.randint(low=min_age, high=max_age, size=num_samples).reshape(-1, 1)
 
     metadata_samples = np.concatenate((gen_bmi, gen_age, gen_sex), axis=1)
 
     return metadata_samples
 
-np.random.seed(50)
 
 
 scaler = MinMaxScaler()
 
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
+
 
 frac_train = 0.7
 
@@ -72,8 +64,6 @@ NumTrainSamples = int(NumAll * frac_train)
 
 
 ### Load the confounders just to apply the scaler to the training data
-### And also to compute the boundaries of the metadata parameter space
-# x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
 x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
@@ -85,25 +75,19 @@ x_confounders = x_confounders.to_numpy()
 
 x_confounders_train = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 
-### Sample metadata for generation
-### Sample 700 female and 700 male metadata
+### Define the characteristics of the population subgroup we want to generate anatomies for
+age_subgroup = 75
+sex_subgroup = [1, 0]
+
+### How many samples to generate for the desired metadata vector
 num_samples = 700
+targeted_metadata_sampled = sample_metadata_targeted(num_samples=num_samples, gen_age=age_subgroup,
+                                                     gen_sex=sex_subgroup, x_confounders=x_confounders)
 
-metadata_sampled_female = sample_metadata(num_samples=num_samples, gender="Female", x_confounders=x_confounders)
-metadata_sampled_male = sample_metadata(num_samples=num_samples, gender="Male", x_confounders=x_confounders)
+targeted_metadata_sampled = scaler.transform(targeted_metadata_sampled)
+targeted_metadata_sampled = torch.tensor(targeted_metadata_sampled, dtype=torch.float32).to(device)
 
-np.save('../data_models_saved/data/metadata_sampled_female.npy', metadata_sampled_female)
-np.save('../data_models_saved/data/metadata_sampled_male.npy', metadata_sampled_male)
-
-
-metadata_sampled_female = scaler.transform(metadata_sampled_female)
-metadata_sampled_male = scaler.transform(metadata_sampled_male)
-
-metadata_sampled_female = torch.tensor(metadata_sampled_female, dtype=torch.float32).to(device)
-metadata_sampled_male = torch.tensor(metadata_sampled_male, dtype=torch.float32).to(device)
-
-
-### Load the generative models
+### Load the cNF and cVAE models to generate synthetic momenta
 ae_decoder = torch.load("../data_models_saved/models/ae_decoder.pth", weights_only=False)
 cnf = torch.load("../data_models_saved/models/cnf_model.pth", weights_only=False)
 
@@ -113,6 +97,7 @@ cvae3 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.001.pth", we
 cvae4 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.0001.pth", weights_only=False)
 cvae5 = torch.load("../data_models_saved/models/cvae_decoder_beta_1e-05.pth", weights_only=False)
 cvae6 = torch.load("../data_models_saved/models/cvae_decoder_beta_1e-06.pth", weights_only=False)
+
 
 ae_decoder.eval()
 cnf.eval()
@@ -125,18 +110,14 @@ cvae5.eval()
 cvae6.eval()
 
 
-
-
 models_str = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
 models = [cnf, cvae1, cvae2, cvae3, cvae4, cvae5, cvae6]
 
 
 for str, mod in zip(models_str, models):
 
-    generated_female = generate_momenta(model_str=str, model=mod, sampled_metadata=metadata_sampled_female)
-    generated_male = generate_momenta(model_str=str, model=mod, sampled_metadata=metadata_sampled_male)
+    generated_momenta_targeted = generate_momenta(model_str=str, model=mod,
+                                                  sampled_metadata=targeted_metadata_sampled)
 
-    save_write_momenta.save_momenta(type_momenta="Female_gen" + "_" + str, momenta_tosave=generated_female)
-    save_write_momenta.save_momenta(type_momenta="Male_gen" + "_" + str, momenta_tosave=generated_male)
-
-# save_write_momenta.save_momenta(type_momenta="Reference", momenta_tosave=momenta)
+    save_write_momenta.save_momenta(type_momenta="Targeted" + "_" + str,
+                                    momenta_tosave=generated_momenta_targeted)
