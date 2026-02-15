@@ -66,9 +66,9 @@ def load_momenta(path_init, num_momenta_samples):
 
     momenta_all = np.empty((num_momenta_samples, 720, 3))
     for i in range(num_momenta_samples):
-        path = path_init + f"/Shooting_Momenta_{i}/data"
+        path = path_init + f"\Shooting_Momenta_{i}\data"
 
-        momenta = np.loadtxt(path+"/Momenta.txt")
+        momenta = np.loadtxt(path+"\Momenta.txt")
         momenta = np.delete(momenta, 0, axis=0)
         momenta = momenta.reshape((1, 720, 3))
 
@@ -208,8 +208,8 @@ for i in range(num_splits):
         path_female = path_generated + "\Female_gen_" + model + "_Momenta"
         path_male = path_generated + "\Male_gen_" + model + "_Momenta"
 
-        momenta_female = load_momenta(path_init=path_female, num_momenta_samples=700)
-        momenta_male = load_momenta(path_init=path_male, num_momenta_samples=700)
+        momenta_female = load_momenta(path_init=path_female, num_momenta_samples=300)
+        momenta_male = load_momenta(path_init=path_male, num_momenta_samples=300)
 
         momenta_generated_all = np.concatenate((momenta_female, momenta_male), axis=0)
         momenta_generated_all = momenta_generated_all.transpose(1, 2, 0)
@@ -254,8 +254,8 @@ results = [[cnf_mean, cnf_std],
 ### Variability experiment
 plt.figure()
 
-plt.plot(real_mean, color='black', label='real')
-plt.fill_between(np.arange(real_results.shape[1]), real_mean-real_std, real_mean+real_std, color='black', alpha=0.3)
+# plt.plot(real_mean, color='black', label='real')
+# plt.fill_between(np.arange(real_results.shape[1]), real_mean-real_std, real_mean+real_std, color='black', alpha=0.3)
 
 for i in range(len(results)):
 
@@ -269,8 +269,8 @@ for i in range(len(results)):
         color = 'green'
         label = r'$\beta=10^{-3}$'
 
-    plt.plot(results[i][0], color=color, label=label)
-    plt.fill_between(np.arange(cnf_results.shape[1]), results[i][0]-results[i][1], results[i][0]+results[i][1], color=color, alpha=0.25)
+    plt.plot(np.abs(np.array(real_mean) - np.array(results[i][0])), color=color, label=label)
+    # plt.fill_between(np.arange(cnf_results.shape[1]), results[i][0]-results[i][1], results[i][0]+results[i][1], color=color, alpha=0.25)
 
 
 
@@ -282,83 +282,85 @@ plt.ylabel('Wasserstein distance')
 plt.legend()
 plt.show()
 # plt.savefig('figures_experiments/pca_experiment/variability_exp.pdf')
-#
-#
-#
-#
-#
-# ### Figure 2 --- 1D distributions of PCA reduced basis coefficients of momenta, for different generative models
-# visualize_1d_pca(real_rb=reference_dists_rb, cnf_rb=models_dists_rb[0],
-#                  cvae_rb=models_dists_rb[2], num_toplot=20)
-#
-#
-#
-#
-#
-# ### Figure 3 --- Variability experiment with respect to sex
-# x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
-# x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
-#                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
-# x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
-# x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, False: 0})
-# x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
-# x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
-# x_confounders = x_confounders.to_numpy()
-#
-# sex_info = x_confounders[:, 2]
-# male_indices = np.where(sex_info.flatten() == 0)[0]
-# female_indices = np.where(sex_info.flatten() == 1)[0]
-#
-# real_momenta_male = momenta_reference[:, male_indices]
-# real_momenta_female = momenta_reference[:, female_indices]
-#
-# x1r_rb, x2r_rb = PCA(reference_group=real_momenta_male, generated_group=real_momenta_female,
-#                        num_components=num_components_pca)
-#
-# wd_real_list = []
-# for k in range(num_components_pca):
-#     wd = wasserstein_distance(x1r_rb[k], x2r_rb[k])
-#     wd_real_list.append(wd)
-#
-# models = ['nf', 'gan', 'vae']
-# wd_gen_lists_all = []
-# for model in models:
-#     path_female = "data_models_saved/data/momenta2shape/Female_gen_" + model + "_Momenta"
-#     path_male = "data_models_saved/data/momenta2shape/Male_gen_" + model + "_Momenta"
-#
-#     momenta_female = load_momenta(path_init=path_female, num_momenta_samples=700)
-#     momenta_female = momenta_female.transpose(1, 2, 0)
-#     momenta_female = momenta_female.reshape(720 * 3, -1)
-#
-#
-#     momenta_male = load_momenta(path_init=path_male, num_momenta_samples=700)
-#     momenta_male = momenta_male.transpose(1, 2, 0)
-#     momenta_male = momenta_male.reshape(720 * 3, -1)
-#
-#
-#     ### PCA between real subset X1 and synthetic momenta
-#     x1g_rb, x2g_rb = PCA(reference_group=momenta_male, generated_group=momenta_female,
-#                                     num_components=num_components_pca)
-#
-#     wd_gen_list = []
-#     for k in range(num_components_pca):
-#         wd = wasserstein_distance(x1g_rb[k], x2g_rb[k])
-#         wd_gen_list.append(wd)
-#
-#     wd_gen_lists_all.append(wd_gen_list)
-#
-#
-# plt.figure()
+
+
+
+
+
+### Figure 2 --- 1D distributions of PCA reduced basis coefficients of momenta, for different generative models
+visualize_1d_pca(real_rb=reference_dists_rb, cnf_rb=models_dists_rb[0],
+                 cvae_rb=models_dists_rb[2], num_toplot=20)
+
+
+
+
+
+### Figure 3 --- Variability experiment with respect to sex
+x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
+x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
+                    'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
+x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
+x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, False: 0})
+x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
+x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
+x_confounders = x_confounders.to_numpy()
+
+sex_info = x_confounders[:, 2]
+male_indices = np.where(sex_info.flatten() == 0)[0]
+female_indices = np.where(sex_info.flatten() == 1)[0]
+
+real_momenta_male = momenta_reference[:, male_indices]
+real_momenta_female = momenta_reference[:, female_indices]
+
+x1r_rb, x2r_rb = PCA(reference_group=real_momenta_male, generated_group=real_momenta_female,
+                       num_components=num_components_pca)
+
+wd_real_list = []
+for k in range(num_components_pca):
+    wd = wasserstein_distance(x1r_rb[k], x2r_rb[k])
+    wd_real_list.append(wd)
+
+models = ['nf', 'vae2', 'vae3']
+wd_gen_lists_all = []
+for model in models:
+    path_female = path_generated + "\Female_gen_" + model + "_Momenta"
+    path_male = path_generated + "\Male_gen_" + model + "_Momenta"
+
+    momenta_female = load_momenta(path_init=path_female, num_momenta_samples=300)
+    momenta_female = momenta_female.transpose(1, 2, 0)
+    momenta_female = momenta_female.reshape(720 * 3, -1)
+
+
+    momenta_male = load_momenta(path_init=path_male, num_momenta_samples=300)
+    momenta_male = momenta_male.transpose(1, 2, 0)
+    momenta_male = momenta_male.reshape(720 * 3, -1)
+
+
+    ### PCA between real subset X1 and synthetic momenta
+    x1g_rb, x2g_rb = PCA(reference_group=real_momenta_male, generated_group=momenta_female,
+                                    num_components=num_components_pca)
+
+    wd_gen_list = []
+    for k in range(num_components_pca):
+        wd = wasserstein_distance(x1g_rb[k], x2g_rb[k])
+        wd_gen_list.append(wd)
+
+    wd_gen_lists_all.append(wd_gen_list)
+
+
+plt.figure()
 # plt.plot(wd_real_list, color='black', label='real')
-# plt.plot(wd_gen_lists_all[0], color='tab:blue', label='CaN_Do')
-# plt.plot(wd_gen_lists_all[1], color='red', label='GAN')
-# plt.plot(wd_gen_lists_all[2], color='orange', label='VAE')
-#
-# plt.yscale("log")
-# plt.xscale("log")
-# plt.xlabel('reduced basis coefficients')
-# plt.ylabel('Wasserstein distance')
-# plt.legend()
+plt.plot(np.abs(np.array(wd_real_list)-np.array(wd_gen_lists_all[0])), color='tab:blue', label='CaN_Do')
+plt.plot(np.abs(np.array(wd_real_list)-np.array(wd_gen_lists_all[1])), color='darkred', label=r'$\beta=10^{-2}$')
+plt.plot(np.abs(np.array(wd_real_list)-np.array(wd_gen_lists_all[2])), color='orange', label=r'$\beta=10^{-3}$')
+
+
+plt.yscale("log")
+plt.xscale("log")
+plt.xlabel('reduced basis coefficients')
+plt.ylabel('Wasserstein distance')
+plt.legend()
+plt.show()
 # plt.savefig('figures_experiments/pca_experiment/variability_exp_sex.pdf')
 
 

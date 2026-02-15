@@ -28,23 +28,27 @@ def generate_momenta(model_str, model, sampled_metadata):
     return generated_shapes
 
 
-def sample_metadata_targeted(num_samples, gen_age, gen_sex, x_confounders):
+def sample_metadata_targeted(num_samples, gen_bmi, gen_age, gen_sex, x_confounders):
     sex0 = gen_sex[0]
 
     sex1_all = np.tile(gen_sex[0], num_samples).reshape(-1, 1)
     sex2_all = np.tile(gen_sex[1], num_samples).reshape(-1, 1)
 
-    gen_sex = np.concatenate((sex1_all, sex2_all), axis=1)
-    gen_age = np.tile(gen_age, num_samples).reshape(-1, 1)
+    gen_sex_samples = np.concatenate((sex1_all, sex2_all), axis=1)
+    gen_age_samples = np.tile(gen_age, num_samples).reshape(-1, 1)
 
     indices = np.where(x_confounders[:, 2] == sex0)[0]
 
-    min_bmi = np.min(x_confounders[indices][:, 0])
+    min_bmi = gen_bmi
     max_bmi = np.max(x_confounders[indices][:, 0])
 
-    gen_bmi = np.random.uniform(low=min_bmi, high=max_bmi, size=num_samples).reshape(-1, 1)
+    min_age = np.min(x_confounders[indices][:, 1])
+    max_age = gen_age
 
-    metadata_samples = np.concatenate((gen_bmi, gen_age, gen_sex), axis=1)
+    gen_bmi_samples = np.random.uniform(low=min_bmi, high=max_bmi, size=num_samples).reshape(-1, 1)
+    gen_age_samples = np.random.uniform(low=min_age, high=max_age, size=num_samples).reshape(-1, 1)
+
+    metadata_samples = np.concatenate((gen_bmi_samples, gen_age_samples, gen_sex_samples), axis=1)
 
     return metadata_samples
 
@@ -76,13 +80,15 @@ x_confounders = x_confounders.to_numpy()
 x_confounders_train = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 
 ### Define the characteristics of the population subgroup we want to generate anatomies for
-age_subgroup = 75
-sex_subgroup = [1, 0]
+bmi_subgroup = 24
+age_subgroup = 56
+sex_subgroup = [0, 1]
 
 ### How many samples to generate for the desired metadata vector
-num_samples = 700
+num_samples = 120
 targeted_metadata_sampled = sample_metadata_targeted(num_samples=num_samples, gen_age=age_subgroup,
-                                                     gen_sex=sex_subgroup, x_confounders=x_confounders)
+                                                     gen_bmi=bmi_subgroup, gen_sex=sex_subgroup,
+                                                     x_confounders=x_confounders)
 
 targeted_metadata_sampled = scaler.transform(targeted_metadata_sampled)
 targeted_metadata_sampled = torch.tensor(targeted_metadata_sampled, dtype=torch.float32).to(device)

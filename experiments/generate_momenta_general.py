@@ -71,6 +71,13 @@ NumAll =  2274
 NumTrainSamples = int(NumAll * frac_train)
 
 
+momenta = np.loadtxt(r"../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+
+momenta = np.delete(momenta, 0, axis=0)
+momenta = momenta.reshape((2274, 720, 3))
+save_write_momenta.save_momenta(type_momenta="Reference", momenta_tosave=momenta)
+
+
 ### Load the confounders just to apply the scaler to the training data
 ### And also to compute the boundaries of the metadata parameter space
 # x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
@@ -86,8 +93,8 @@ x_confounders = x_confounders.to_numpy()
 x_confounders_train = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 
 ### Sample metadata for generation
-### Sample 700 female and 700 male metadata
-num_samples = 700
+### Sample 300 female and 300 male metadata
+num_samples = 300
 
 metadata_sampled_female = sample_metadata(num_samples=num_samples, gender="Female", x_confounders=x_confounders)
 metadata_sampled_male = sample_metadata(num_samples=num_samples, gender="Male", x_confounders=x_confounders)
@@ -139,4 +146,4 @@ for str, mod in zip(models_str, models):
     save_write_momenta.save_momenta(type_momenta="Female_gen" + "_" + str, momenta_tosave=generated_female)
     save_write_momenta.save_momenta(type_momenta="Male_gen" + "_" + str, momenta_tosave=generated_male)
 
-# save_write_momenta.save_momenta(type_momenta="Reference", momenta_tosave=momenta)
+
