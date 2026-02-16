@@ -36,7 +36,7 @@ def compute_mass_volume(input_dir, num_samples):
     results = []
 
     pbar = tqdm(total=len(mesh_files), leave=True, desc='Computing mass/volume...')
-    for filename in mesh_files:
+    for i, filename in enumerate(mesh_files):
         if filename.endswith('.vtk'):
             mesh = pv.read(filename)
 
@@ -126,7 +126,8 @@ def compute_mass_volume(input_dir, num_samples):
                     'File': filename,
                     'LV_Vol_mL': lv_data['volume'],
                     'RV_Vol_mL': rv_data['volume'],
-                    'Myo_Mass_g': myo_vol * DENSITY
+                    'Myo_Mass_g': myo_mass,
+                    'Index': i
                 })
                 # print(f"Processed {filename}")
             else:

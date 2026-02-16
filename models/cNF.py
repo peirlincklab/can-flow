@@ -370,8 +370,8 @@ class FlowHeart(nn.Module):
 
         outs = []
         ### Sample from the prior
-        x = prior.sample((1,))
-        x = x.reshape(x_conf.shape[0], mean.shape[1])
+        x = prior.sample()
+        # x = x.reshape(x_conf.shape[0], mean.shape[1])
 
         outs.append(x)
         for i, flow in enumerate(self.flows[::-1]):

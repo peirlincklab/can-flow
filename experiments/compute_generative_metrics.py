@@ -63,24 +63,31 @@ path_init = "/home/kostas/home/Gen_Metrics_Exp_Files"
 models = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
 
 real_pcs = load_pcs_real(num_momenta_samples=2274)
-N_subsample = 1400 ### subsample the real dataset, so that the real and generated sets have equal size
+N_subsample = 600 ### subsample the real dataset, so that the real and generated sets have equal size
 
-real_pcs_subsampled = random.sample(real_pcs, N_subsample) 
+num_runs_stoch = 4
+mmd_vals_all = []
+cov_vals_all = []
+for i in range(num_runs_stoch):
+    real_pcs_subsampled = random.sample(real_pcs, N_subsample)
 
-mmd_vals = []
-cov_vals = []
-for model in models:
+    mmd_vals = []
+    cov_vals = []
+    for model in models:
 
-    ### gen_pcs now will have 700 female and 700 male samples
-    gen_pcs = load_pcs_gen(path=path_init+f"/{model}_PCs", num_momenta_samples=700)
+        ### gen_pcs now will have 300 female and 300 male samples
+        gen_pcs = load_pcs_gen(path=path_init+f"/{model}_PCs", num_momenta_samples=300)
 
-    mmd = MMD(S_g=gen_pcs, S_r=real_pcs_subsampled)
-    cov = Coverage(S_g=gen_pcs, S_r=real_pcs_subsampled)
+        mmd = MMD(S_g=gen_pcs, S_r=real_pcs_subsampled)
+        cov = Coverage(S_g=gen_pcs, S_r=real_pcs_subsampled)
 
-    mmd_vals.append(mmd)
-    cov_vals.append(cov)
+        mmd_vals.append(mmd)
+        cov_vals.append(cov)
 
-    print(model, mmd, cov)
+        print(model, mmd, cov)
 
-np.save("../data_models_saved/data/mmd_vals.npy", np.array(mmd_vals))
-np.save("../data_models_saved/data/cov_vals.npy", np.array(cov_vals))
+    mmd_vals_all.append(mmd_vals)
+    cov_vals_all.append(cov_vals)
+
+np.save("data_models_saved/data/mmd_vals.npy", np.array(mmd_vals_all))
+np.save("data_models_saved/data/cov_vals.npy", np.array(cov_vals_all))

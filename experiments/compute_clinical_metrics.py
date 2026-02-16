@@ -89,9 +89,13 @@ df_real = compute_mass_volume(input_dir=input_dir_real, num_samples=2274)
 #                               num_samples=num_samples_targeted)
 
 dfs_generated = []
+indices_metadata = []
 for mod_dir in models_dir:
     df = compute_mass_volume(input_dir=input_dir_general + fr"\{mod_dir}_Momenta", num_samples=300)
     dfs_generated.append(df)
+    indices_metadata.append(df.shape[0])
+
+np.save("../data_models_saved/data/indices_metadata_clinical.npy", np.array(indices_metadata))
 
 
 df_nf = pd.concat([dfs_generated[0], dfs_generated[1]], axis=0, ignore_index=True)
