@@ -28,22 +28,21 @@ def generate_momenta(model_str, model, sampled_metadata):
     return generated_shapes
 
 
-def sample_metadata_targeted(num_samples, gen_bmi, gen_age, gen_sex, x_confounders):
+def sample_metadata_targeted(num_samples, gen_age, gen_sex, x_confounders):
     sex0 = gen_sex[0]
 
     sex1_all = np.tile(gen_sex[0], num_samples).reshape(-1, 1)
     sex2_all = np.tile(gen_sex[1], num_samples).reshape(-1, 1)
 
     gen_sex_samples = np.concatenate((sex1_all, sex2_all), axis=1)
-    gen_age_samples = np.tile(gen_age, num_samples).reshape(-1, 1)
 
     indices = np.where(x_confounders[:, 2] == sex0)[0]
 
-    min_bmi = gen_bmi
+    min_bmi = np.min(x_confounders[indices][:, 0])
     max_bmi = np.max(x_confounders[indices][:, 0])
 
-    min_age = np.min(x_confounders[indices][:, 1])
-    max_age = gen_age
+    min_age = gen_age
+    max_age = np.max(x_confounders[indices][:, 1])
 
     gen_bmi_samples = np.random.uniform(low=min_bmi, high=max_bmi, size=num_samples).reshape(-1, 1)
     gen_age_samples = np.random.uniform(low=min_age, high=max_age, size=num_samples).reshape(-1, 1)
@@ -80,14 +79,13 @@ x_confounders = x_confounders.to_numpy()
 x_confounders_train = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 
 ### Define the characteristics of the population subgroup we want to generate anatomies for
-bmi_subgroup = 24
-age_subgroup = 56
+age_subgroup = 58
 sex_subgroup = [0, 1]
 
 ### How many samples to generate for the desired metadata vector
-num_samples = 120
+num_samples = 650
 targeted_metadata_sampled = sample_metadata_targeted(num_samples=num_samples, gen_age=age_subgroup,
-                                                     gen_bmi=bmi_subgroup, gen_sex=sex_subgroup,
+                                                     gen_sex=sex_subgroup,
                                                      x_confounders=x_confounders)
 
 targeted_metadata_sampled = scaler.transform(targeted_metadata_sampled)
@@ -97,27 +95,21 @@ targeted_metadata_sampled = torch.tensor(targeted_metadata_sampled, dtype=torch.
 ae_decoder = torch.load("../data_models_saved/models/ae_decoder.pth", weights_only=False)
 cnf = torch.load("../data_models_saved/models/cnf_model.pth", weights_only=False)
 
-cvae1 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.1.pth", weights_only=False)
 cvae2 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.01.pth", weights_only=False)
 cvae3 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.001.pth", weights_only=False)
-cvae4 = torch.load("../data_models_saved/models/cvae_decoder_beta_0.0001.pth", weights_only=False)
-cvae5 = torch.load("../data_models_saved/models/cvae_decoder_beta_1e-05.pth", weights_only=False)
-cvae6 = torch.load("../data_models_saved/models/cvae_decoder_beta_1e-06.pth", weights_only=False)
+
 
 
 ae_decoder.eval()
 cnf.eval()
 
-cvae1.eval()
 cvae2.eval()
 cvae3.eval()
-cvae4.eval()
-cvae5.eval()
-cvae6.eval()
 
 
-models_str = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
-models = [cnf, cvae1, cvae2, cvae3, cvae4, cvae5, cvae6]
+
+models_str = ['nf', 'vae2', 'vae3']
+models = [cnf, cvae2, cvae3]
 
 
 for str, mod in zip(models_str, models):
