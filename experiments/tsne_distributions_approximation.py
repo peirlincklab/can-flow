@@ -10,6 +10,15 @@ from matplotlib import rcParams, font_manager
 from scipy.stats import gaussian_kde
 import os
 
+seed = 80
+np.random.seed(seed)
+
+
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
+
 
 
 def t_sne(z_real, z_synthetic, female_indices, male_indices):
@@ -33,61 +42,61 @@ def t_sne(z_real, z_synthetic, female_indices, male_indices):
     ymin, ymax = (min(z_tsne_real[female_indices, 1].min(), z_tsne_real[male_indices, 1].min()) - 10,
                   max(z_tsne_real[female_indices, 1].max(), z_tsne_real[male_indices, 1].max()) + 10)
 
-    xx, yy = np.meshgrid(np.linspace(xmin, xmax, 2274),
-                         np.linspace(ymin, ymax, 2274))
+    xx, yy = np.meshgrid(np.linspace(xmin, xmax, 500),
+                         np.linspace(ymin, ymax, 500))
 
     ### Figure 1: real data
     plt.figure(figsize=(10, 7))
     plt.scatter(z_tsne_real[female_indices, 0], z_tsne_real[female_indices, 1],
-                color='purple', marker='o', label='female real', alpha=0.25)
+                color='purple', marker='o', label='female real', alpha=0.15)
     plt.scatter(z_tsne_real[male_indices, 0], z_tsne_real[male_indices, 1],
-                color='teal', marker='o', label='male real', alpha=0.25)
+                color='teal', marker='o', label='male real', alpha=0.15)
     # KDE for females
     f_kde = gaussian_kde(np.vstack([z_tsne_real[female_indices, 0], z_tsne_real[female_indices, 1]]))
     f_z = f_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
-    plt.contour(xx, yy, f_z, colors='purple', levels=5, linewidths=1)
+    plt.contour(xx, yy, f_z, colors='purple', levels=7, linewidths=1.6)
 
     # KDE for males
     m_kde = gaussian_kde(np.vstack([z_tsne_real[male_indices, 0], z_tsne_real[male_indices, 1]]))
     m_z = m_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
-    plt.contour(xx, yy, m_z, colors='teal', levels=5, linewidths=1)
-    plt.savefig(folder + f"ae_posterior.pdf", bbox_inches='tight')
+    plt.contour(xx, yy, m_z, colors='teal', levels=7, linewidths=1.6)
+    plt.savefig(folder + f"ae_posterior.svg")
     plt.close()
     print("saved ae")
 
     ### Figure 2: Synthetic data
     plt.figure(figsize=(10, 7))
     plt.scatter(z_tsne_synthetic[female_indices, 0], z_tsne_synthetic[female_indices, 1],
-                color='purple', marker='o', label='female real', alpha=0.25)
+                color='purple', marker='o', label='female real', alpha=0.15)
     plt.scatter(z_tsne_synthetic[male_indices, 0], z_tsne_synthetic[male_indices, 1],
-                color='teal', marker='o', label='male real', alpha=0.25)
+                color='teal', marker='o', label='male real', alpha=0.15)
     # KDE for females
     f_kde = gaussian_kde(np.vstack([z_tsne_synthetic[female_indices, 0], z_tsne_synthetic[female_indices, 1]]))
     f_z = f_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
-    plt.contour(xx, yy, f_z, colors='purple', levels=5, linewidths=1)
+    plt.contour(xx, yy, f_z, colors='purple', levels=7, linewidths=1.6)
 
     # KDE for males
     m_kde = gaussian_kde(np.vstack([z_tsne_synthetic[male_indices, 0], z_tsne_synthetic[male_indices, 1]]))
     m_z = m_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
-    plt.contour(xx, yy, m_z, colors='teal', levels=5, linewidths=1)
-    plt.savefig(folder + f"nf_posterior.pdf", bbox_inches='tight')
+    plt.contour(xx, yy, m_z, colors='teal', levels=7, linewidths=1.6)
+    plt.savefig(folder + f"nf_posterior.svg")
     plt.close()
     print("saved nf")
 
 
 ### Figure formatting
 params = {
-   'axes.labelsize': 15.4,
-   'font.size': 15.4,
-   'legend.fontsize': 15.4,
-   'xtick.labelsize': 15.4,
-   'ytick.labelsize': 15.4,
+   'axes.labelsize': 25,
+   'font.size': 25,
+   'legend.fontsize': 25,
+   'xtick.labelsize': 25,
+   'ytick.labelsize': 25,
    'text.usetex': False,
-   'axes.linewidth': 2,
-   'xtick.major.width': 2,
-   'ytick.major.width': 2,
-   'xtick.major.size': 2,
-   'ytick.major.size': 2,
+   'axes.linewidth': 2.5,
+   'xtick.major.width': 2.5,
+   'ytick.major.width': 2.5,
+   'xtick.major.size': 2.5,
+   'ytick.major.size': 2.5,
 }
 plt.rcParams.update(params)
 font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceSansPro-Regular.otf'

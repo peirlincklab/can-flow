@@ -23,7 +23,7 @@ def create_plot(metadata_vals, pheno_vals, metadata_type_str,
     )
 
 
-    plt.figure(figsize=(8, 7))
+    plt.figure(figsize=(10, 10))
 
 
     f_kde = gaussian_kde(np.vstack([metadata_vals, pheno_vals]))
@@ -31,23 +31,23 @@ def create_plot(metadata_vals, pheno_vals, metadata_type_str,
     plt.contourf(x_grid, y_grid, f_plot, cmap=colormap, levels=9)
 
     plt.xlabel(metadata_type_str)
-    plt.savefig(f"../figures_experiments/pheno_dists_contours/{model_str}_{pheno_str}_{metadata_type_str}.pdf")
+    plt.savefig(f"../figures_experiments/pheno_dists_contours/{model_str}_{pheno_str}_{metadata_type_str}.svg")
     plt.close()
 
 
 
 params = {
-            'axes.labelsize': 15.4,
-            'font.size': 15.4,
-            'legend.fontsize': 15.4,
-            'xtick.labelsize': 15.4,
-            'ytick.labelsize': 15.4,
+            'axes.labelsize': 35,
+            'font.size': 35,
+            'legend.fontsize': 35,
+            'xtick.labelsize': 35,
+            'ytick.labelsize': 35,
             'text.usetex': False,
-            'axes.linewidth': 2,
-            'xtick.major.width': 2,
-            'ytick.major.width': 2,
-            'xtick.major.size': 2,
-            'ytick.major.size': 2
+            'axes.linewidth': 4,
+            'xtick.major.width': 4,
+            'ytick.major.width': 4,
+            'xtick.major.size': 4,
+            'ytick.major.size': 4
         }
 
 

@@ -33,6 +33,7 @@ def t_sne(z, female_indices, male_indices, mod_str):
     os.makedirs(folder, exist_ok=True)
 
     z_tsne = TSNE(n_components=2, learning_rate='auto', init='random', perplexity=15).fit_transform(z)
+    print('tsne ok')
 
     ### Visualize wrt gender
     xmin, xmax = (min(z_tsne[female_indices, 0].min(), z_tsne[male_indices, 0].min()) - 10,
@@ -41,8 +42,8 @@ def t_sne(z, female_indices, male_indices, mod_str):
     ymin, ymax = (min(z_tsne[female_indices, 1].min(), z_tsne[male_indices, 1].min()) - 10,
                   max(z_tsne[female_indices, 1].max(), z_tsne[male_indices, 1].max()) + 10)
 
-    xx, yy = np.meshgrid(np.linspace(xmin, xmax, 2274),
-                         np.linspace(ymin, ymax, 2274))
+    xx, yy = np.meshgrid(np.linspace(xmin, xmax, 500),
+                         np.linspace(ymin, ymax, 500))
 
     plt.figure(figsize=(10, 7))
     plt.scatter(z_tsne[female_indices, 0], z_tsne[female_indices, 1],
@@ -58,22 +59,21 @@ def t_sne(z, female_indices, male_indices, mod_str):
     m_kde = gaussian_kde(np.vstack([z_tsne[male_indices, 0], z_tsne[male_indices, 1]]))
     m_z = m_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
     plt.contour(xx, yy, m_z, colors='teal', levels=7, linewidths=1.6)
-    plt.savefig(folder + f"{mod_str}_posterior.pdf")
+    plt.savefig(folder + f"{mod_str}_posterior.svg")
     plt.close()
-    print("saved")
 
 params = {
-   'axes.labelsize': 15.4,
-   'font.size': 15.4,
-   'legend.fontsize': 15.4,
-   'xtick.labelsize': 15.4,
-   'ytick.labelsize': 15.4,
+   'axes.labelsize': 20,
+   'font.size': 20,
+   'legend.fontsize': 20,
+   'xtick.labelsize': 20,
+   'ytick.labelsize': 20,
    'text.usetex': False,
-   'axes.linewidth': 2,
-   'xtick.major.width': 2,
-   'ytick.major.width': 2,
-   'xtick.major.size': 2,
-   'ytick.major.size': 2,
+   'axes.linewidth': 2.5,
+   'xtick.major.width': 2.5,
+   'ytick.major.width': 2.5,
+   'xtick.major.size': 2.5,
+   'ytick.major.size': 2.5,
 }
 plt.rcParams.update(params)
 font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceSansPro-Regular.otf'
@@ -190,13 +190,13 @@ wd_male_female_vals.append(wd_sex_real)
 x = np.arange(len(categories))
 width = 0.35
 
-plt.figure()
-plt.bar(x - width/2, wd_all_vals, width, color='darkred', label=r'$z \text{ Vs } \mathcal{N}(\mathbf{0}, \mathbf{I})$')
-plt.bar(x + width/2, wd_male_female_vals, width, color='navy',label=r'$z_{female} \text{ Vs } z_{male}$' )
+plt.figure(figsize=(6.7, 5.5))
+plt.bar(x - width/2, wd_all_vals, width, color='darkred', label=r'$z \text{ Vs } \mathcal{N}(\mathbf{0}, \mathbf{I})$', clip_on=True, rasterized=True)
+plt.bar(x + width/2, wd_male_female_vals, width, color='navy',label=r'$z_{female} \text{ Vs } z_{male}$', clip_on=True, rasterized=True)
 plt.xticks(x, categories)
 plt.xlabel("models")
 plt.ylabel("OT cost")
 plt.legend()
 plt.yscale('log')
-plt.savefig(folder + f"bar_ot_costs.pdf")
+plt.savefig(folder + f"bar_ot_costs.svg")
 plt.close()

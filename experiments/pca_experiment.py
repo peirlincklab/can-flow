@@ -48,17 +48,17 @@ def visualize_1d_pca(real_rb, cnf_rb, cvae_rb, num_toplot):
         d_vae = kde_vae(x_vae)
 
         plt.figure()
-        plt.plot(x_vae, d_vae, color='sandybrown')
-        plt.fill_between(x_vae, d_vae, color='sandybrown', alpha=0.15)
+        plt.plot(x_vae, d_vae, color="#CC79A7")
+        plt.fill_between(x_vae, d_vae, color="#CC79A7", alpha=0.15)
         plt.plot(x_ref, d_ref, color='black')
         plt.fill_between(x_ref, d_ref, color='black', alpha=0.15)
-        plt.plot(x_nf, d_nf, color='tab:blue')
-        plt.fill_between(x_nf, d_nf, color='tab:blue', alpha=0.15)
+        plt.plot(x_nf, d_nf, color="#56B4E9")
+        plt.fill_between(x_nf, d_nf, color="#56B4E9", alpha=0.15)
         # plt.gca().yaxis.set_visible(False)
         # plt.gca().spines['top'].set_visible(False)
         # plt.gca().spines['right'].set_visible(False)
         # plt.gca().spines['left'].set_visible(False)
-        plt.savefig(path_1d_dists + f"/pca_mode_{i}.pdf")
+        plt.savefig(path_1d_dists + f"/pca_mode_{i}.svg")
         plt.close()
 
 
@@ -123,18 +123,26 @@ def PCA(reference_group, generated_group, num_components, random_svd=False):
     return X_rb_reference, X_rb_generated
 
 
+
+seed = 44
+torch.manual_seed(seed)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
 params = {
-            'axes.labelsize': 15.4,
-            'font.size': 15.4,
-            'legend.fontsize': 15.4,
-            'xtick.labelsize': 15.4,
-            'ytick.labelsize': 15.4,
+            'axes.labelsize': 20,
+            'font.size': 20,
+            'legend.fontsize': 20,
+            'xtick.labelsize': 20,
+            'ytick.labelsize': 20,
             'text.usetex': False,
             'axes.linewidth': 2,
-            'xtick.major.width': 2,
-            'ytick.major.width': 2,
-            'xtick.major.size': 2,
-            'ytick.major.size': 2
+            'xtick.major.width': 3,
+            'ytick.major.width': 3,
+            'xtick.major.size': 3,
+            'ytick.major.size': 3
         }
 plt.rcParams.update(params)
 font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceSansPro-Regular.otf'
@@ -252,36 +260,36 @@ results = [[cnf_mean, cnf_std],
 
 
 ### Variability experiment
-plt.figure()
-
-# plt.plot(real_mean, color='black', label='real')
-# plt.fill_between(np.arange(real_results.shape[1]), real_mean-real_std, real_mean+real_std, color='black', alpha=0.3)
-
+plt.figure(figsize=(7, 6))
 for i in range(len(results)):
 
     if i == 0:
-        color = 'blue'
+        color = "#56B4E9"
         label = 'CAN-DO'
     elif i == 1:
-        color = 'darkred'
+        color = 'orange'
         label = r'$\beta=10^{-2}$'
     elif i == 2:
-        color = 'green'
+        color = "#CC79A7"
         label = r'$\beta=10^{-3}$'
 
-    plt.plot(np.abs(np.array(real_mean) - np.array(results[i][0])), color=color, label=label)
-    # plt.fill_between(np.arange(cnf_results.shape[1]), results[i][0]-results[i][1], results[i][0]+results[i][1], color=color, alpha=0.25)
+    mean = np.array(real_mean) / np.array(results[i][0])
+    minus_std = np.array(real_mean - real_std) / np.array(results[i][0]-results[i][1])
+    plus_std = np.array(real_mean + real_std) / np.array(results[i][0]+results[i][1])
+
+    line, = plt.plot(mean, color=color, label=label, linewidth=2)
+    line.set_clip_on(True)
+    plt.fill_between(np.arange(cnf_results.shape[1]), minus_std, plus_std, color=color, alpha=0.25, clip_on=True, rasterized=True)
 
 
 
-
+plt.axhline(y=1, color='black', linestyle='--')
 plt.yscale("log")
 plt.xscale("log")
-plt.xlabel('reduced basis coefficients')
-plt.ylabel('Wasserstein distance')
-plt.legend()
-plt.show()
-# plt.savefig('figures_experiments/pca_experiment/variability_exp.pdf')
+plt.xlabel('PCA coefficients')
+# plt.ylabel(r"$\frac{WD(\mathbf{X}_1, \mathbf{X}_2)}{WD(\mathbf{X}_1, \tilde{\mathbf{X}}_{\text{gen}})}$")
+plt.savefig('../figures_experiments/pca_experiment/variability_exp.svg')
+plt.close()
 
 
 
@@ -289,7 +297,7 @@ plt.show()
 
 ### Figure 2 --- 1D distributions of PCA reduced basis coefficients of momenta, for different generative models
 visualize_1d_pca(real_rb=reference_dists_rb, cnf_rb=models_dists_rb[0],
-                 cvae_rb=models_dists_rb[2], num_toplot=20)
+                 cvae_rb=models_dists_rb[2], num_toplot=10)
 
 
 
@@ -348,19 +356,17 @@ for model in models:
     wd_gen_lists_all.append(wd_gen_list)
 
 
-plt.figure()
-# plt.plot(wd_real_list, color='black', label='real')
-plt.plot(np.abs(np.array(wd_real_list)-np.array(wd_gen_lists_all[0])), color='tab:blue', label='CaN_Do')
-plt.plot(np.abs(np.array(wd_real_list)-np.array(wd_gen_lists_all[1])), color='darkred', label=r'$\beta=10^{-2}$')
-plt.plot(np.abs(np.array(wd_real_list)-np.array(wd_gen_lists_all[2])), color='orange', label=r'$\beta=10^{-3}$')
+plt.figure(figsize=(7, 6))
+plt.plot(np.array(wd_real_list) / np.array(wd_gen_lists_all[0]), color="#56B4E9", label='CAN-DO', linewidth=2)
+plt.axhline(y=1, color='black', linestyle='--')
+plt.plot(np.array(wd_real_list) / np.array(wd_gen_lists_all[1]), color='orange', label=r'cVAE $\beta=10^{-2}$', linewidth=2)
+plt.plot(np.array(wd_real_list) / np.array(wd_gen_lists_all[2]), color="#CC79A7", label=r'cVAE $\beta=10^{-3}$', linewidth=2)
 
 
 plt.yscale("log")
 plt.xscale("log")
-plt.xlabel('reduced basis coefficients')
-plt.ylabel('Wasserstein distance')
-plt.legend()
-plt.show()
-# plt.savefig('figures_experiments/pca_experiment/variability_exp_sex.pdf')
+plt.xlabel('PCA coefficients')
+# plt.ylabel(r"$\frac{WD(\mathbf{X}^m, \mathbf{X}^f)}{WD(\mathbf{X}^m, \tilde{\mathbf{X}}^f_{\text{gen}})}$")
+plt.savefig('../figures_experiments/pca_experiment/variability_exp_sex.svg')
 
 

@@ -36,17 +36,17 @@ def kl_div_histogram(x, y):
 
 
 params = {
-            'axes.labelsize': 15.4,
-            'font.size': 15.4,
-            'legend.fontsize': 15.4,
-            'xtick.labelsize': 15.4,
-            'ytick.labelsize': 15.4,
+            'axes.labelsize': 10,
+            'font.size': 10,
+            'legend.fontsize': 10,
+            'xtick.labelsize': 10,
+            'ytick.labelsize': 10,
             'text.usetex': False,
-            'axes.linewidth': 2,
-            'xtick.major.width': 2,
-            'ytick.major.width': 2,
-            'xtick.major.size': 2,
-            'ytick.major.size': 2
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
+            'xtick.major.size': 1.5,
+            'ytick.major.size': 1.5
         }
 
 
@@ -103,25 +103,27 @@ ax_histy   = fig.add_subplot(gs[1,1], sharey=ax_scatter)
 ax_histx2 = ax_histx.twinx()
 ax_histy2 = ax_histy.twiny()
 
-ax_scatter.scatter(rv_vol_real, lv_vol_real, s=5, color='tab:grey', label='real')
-ax_scatter.scatter(rv_vol_nf, lv_vol_nf, s=5, color='aqua', label='CAN-DO')
-ax_scatter.scatter(rv_vol_vae2, lv_vol_vae2, s=5, color='tab:orange', label=r'$\beta=10^{-2}$')
-ax_scatter.scatter(rv_vol_vae3, lv_vol_vae3, s=5, color='tab:red', label=r'$\beta=10^{-3}$')
+ax_scatter.scatter(rv_vol_real, lv_vol_real, s=20, color='black', edgecolor='white',linewidth=0.3,label='real')
+ax_scatter.scatter(rv_vol_nf, lv_vol_nf, s=20, color="#56B4E9", edgecolor='white', linewidth=0.3,label='CAN-DO')
+ax_scatter.scatter(rv_vol_vae2, lv_vol_vae2, s=20, color='orange', edgecolor='white', linewidth=0.3,label=r'cVAE $\beta=10^{-2}$')
+ax_scatter.scatter(rv_vol_vae3, lv_vol_vae3, s=20, color="#CC79A7", edgecolor='white', linewidth=0.3, label=r'cVAE $\beta=10^{-3}$')
+
+
 ax_scatter.set_xlabel('RV volume [mL]')
 ax_scatter.set_ylabel('LV volume [mL]')
-ax_scatter.legend()
+ax_scatter.legend(loc="lower right", fontsize=10)
 
 ### Top KDE -> For RV
-sns.kdeplot(x=rv_vol_real, ax=ax_histx, fill=True, color='tab:grey')
-sns.kdeplot(x=rv_vol_nf, ax=ax_histx, fill=True, color='aqua')
-sns.kdeplot(x=rv_vol_vae2, ax=ax_histx, fill=True, color='tab:orange')
-sns.kdeplot(x=rv_vol_vae3, ax=ax_histx2, fill=True, color='tab:red')
+sns.kdeplot(x=rv_vol_real, ax=ax_histx, fill=True, color='black')
+sns.kdeplot(x=rv_vol_nf, ax=ax_histx, fill=True, color="#56B4E9")
+sns.kdeplot(x=rv_vol_vae2, ax=ax_histx, fill=True, color='orange')
+sns.kdeplot(x=rv_vol_vae3, ax=ax_histx2, fill=True, color="#CC79A7")
 
 ### Right KDE -> For LV
-sns.kdeplot(y=lv_vol_real, ax=ax_histy, fill=True, color='tab:grey')
-sns.kdeplot(y=lv_vol_nf, ax=ax_histy, fill=True, color='aqua')
-sns.kdeplot(y=lv_vol_vae2, ax=ax_histy, fill=True, color='tab:orange')
-sns.kdeplot(y=lv_vol_vae3, ax=ax_histy2, fill=True, color='tab:red')
+sns.kdeplot(y=lv_vol_real, ax=ax_histy, fill=True, color='black')
+sns.kdeplot(y=lv_vol_nf, ax=ax_histy, fill=True, color="#56B4E9")
+sns.kdeplot(y=lv_vol_vae2, ax=ax_histy, fill=True, color='orange')
+sns.kdeplot(y=lv_vol_vae3, ax=ax_histy2, fill=True, color="#CC79A7")
 
 # --- Hide tick labels and axis labels for KDE plots ---
 ax_histx.tick_params(axis='x', labelbottom=False)
@@ -157,8 +159,7 @@ folder_save = "../figures_experiments"
 
 # Create the folder
 os.makedirs(folder_save + "/compare_clinical_metrics", exist_ok=True)
-plt.show()
-# plt.savefig(folder_save + "/compare_clinical_metrics" + "/rv_lv_scatter.pdf")
+plt.savefig(folder_save + "/compare_clinical_metrics" + "/rv_lv_scatter.svg")
 
 
 
@@ -166,71 +167,71 @@ plt.show()
 
 
 ### Figure 2: 1d distributions of myocardial mass, LVEDV, RVEDV
-myo_mass_real = df_real['Myo_Mass_g']
-myo_mass_nf = df_nf['Myo_Mass_g']
-myo_mass_vae2 = df_vae2['Myo_Mass_g']
-myo_mass_vae3 = df_vae3['Myo_Mass_g']
-
-
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-
-sns.kdeplot(myo_mass_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real', bw_adjust=1.0)
-sns.kdeplot(myo_mass_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF', bw_adjust=1.0)
-sns.kdeplot(myo_mass_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$', bw_adjust=1.0)
-sns.kdeplot(myo_mass_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$', bw_adjust=1.0)
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-ax1.legend(lines1 + lines2, labels1 + labels2)
-ax1.set_xlabel('myocardial mass [g]')
-ax1.set_ylabel('density')
-ax2.set_ylabel('density', color='tab:red')
-ax2.tick_params(axis='y', colors='tab:red')
-ax2.spines['right'].set_visible(False)
-# plt.savefig(folder_save + "/compare_clinical_metrics" + "/myocardial_mass.pdf")
-plt.show()
-
-
-
-
-
-### Figure 3: 1d distributions of LVEDV, RVEDV
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-
-sns.kdeplot(rv_vol_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real')
-sns.kdeplot(rv_vol_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF')
-sns.kdeplot(rv_vol_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$')
-sns.kdeplot(rv_vol_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$')
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-ax1.legend(lines1 + lines2, labels1 + labels2)
-ax1.set_xlabel('RV volume [mL]')
-ax1.set_ylabel('density')
-ax2.set_ylabel('density', color='tab:red')
-ax2.tick_params(axis='y', colors='tab:red')
-ax2.spines['right'].set_visible(False)
-# plt.savefig(folder_save + "/compare_clinical_metrics" + "/rvedv.pdf")
-plt.show()
-
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-
-sns.kdeplot(lv_vol_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real')
-sns.kdeplot(lv_vol_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF')
-sns.kdeplot(lv_vol_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$')
-sns.kdeplot(lv_vol_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$')
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-ax1.legend(lines1 + lines2, labels1 + labels2)
-ax1.set_xlabel('LV volume [mL]')
-ax1.set_ylabel('density')
-ax2.set_ylabel('density', color='tab:red')
-ax2.tick_params(axis='y', colors='tab:red')
-ax2.spines['right'].set_visible(False)
-# plt.savefig(folder_save + "/compare_clinical_metrics" + "/lvedv.pdf")
-# plt.close()
-plt.show()
+# myo_mass_real = df_real['Myo_Mass_g']
+# myo_mass_nf = df_nf['Myo_Mass_g']
+# myo_mass_vae2 = df_vae2['Myo_Mass_g']
+# myo_mass_vae3 = df_vae3['Myo_Mass_g']
+#
+#
+# fig, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+#
+# sns.kdeplot(myo_mass_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real', bw_adjust=1.0)
+# sns.kdeplot(myo_mass_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF', bw_adjust=1.0)
+# sns.kdeplot(myo_mass_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$', bw_adjust=1.0)
+# sns.kdeplot(myo_mass_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$', bw_adjust=1.0)
+# lines1, labels1 = ax1.get_legend_handles_labels()
+# lines2, labels2 = ax2.get_legend_handles_labels()
+# ax1.legend(lines1 + lines2, labels1 + labels2)
+# ax1.set_xlabel('myocardial mass [g]')
+# ax1.set_ylabel('density')
+# ax2.set_ylabel('density', color='tab:red')
+# ax2.tick_params(axis='y', colors='tab:red')
+# ax2.spines['right'].set_visible(False)
+# # plt.savefig(folder_save + "/compare_clinical_metrics" + "/myocardial_mass.pdf")
+# plt.show()
+#
+#
+#
+#
+#
+# ### Figure 3: 1d distributions of LVEDV, RVEDV
+# fig, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+#
+# sns.kdeplot(rv_vol_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real')
+# sns.kdeplot(rv_vol_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF')
+# sns.kdeplot(rv_vol_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$')
+# sns.kdeplot(rv_vol_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$')
+# lines1, labels1 = ax1.get_legend_handles_labels()
+# lines2, labels2 = ax2.get_legend_handles_labels()
+# ax1.legend(lines1 + lines2, labels1 + labels2)
+# ax1.set_xlabel('RV volume [mL]')
+# ax1.set_ylabel('density')
+# ax2.set_ylabel('density', color='tab:red')
+# ax2.tick_params(axis='y', colors='tab:red')
+# ax2.spines['right'].set_visible(False)
+# # plt.savefig(folder_save + "/compare_clinical_metrics" + "/rvedv.pdf")
+# plt.show()
+#
+# fig, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+#
+# sns.kdeplot(lv_vol_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real')
+# sns.kdeplot(lv_vol_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF')
+# sns.kdeplot(lv_vol_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$')
+# sns.kdeplot(lv_vol_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$')
+# lines1, labels1 = ax1.get_legend_handles_labels()
+# lines2, labels2 = ax2.get_legend_handles_labels()
+# ax1.legend(lines1 + lines2, labels1 + labels2)
+# ax1.set_xlabel('LV volume [mL]')
+# ax1.set_ylabel('density')
+# ax2.set_ylabel('density', color='tab:red')
+# ax2.tick_params(axis='y', colors='tab:red')
+# ax2.spines['right'].set_visible(False)
+# # plt.savefig(folder_save + "/compare_clinical_metrics" + "/lvedv.pdf")
+# # plt.close()
+# plt.show()
 
 
 
