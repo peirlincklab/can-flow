@@ -1,0 +1,5 @@
+{
+    "n_flow": 30,
+    "out_dim_conf": 12,
+    "activation": "gelu"
+}
