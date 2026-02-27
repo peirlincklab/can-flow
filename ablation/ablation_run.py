@@ -88,7 +88,8 @@ activation_dict = {
     "relu": nn.ReLU(),
     "elu": nn.ELU(),
     "leaky_relu": nn.LeakyReLU(),
-    "silu": nn.SiLU()
+    "silu": nn.SiLU(),
+    "gelu": nn.GELU()
 }
 
 
@@ -116,7 +117,7 @@ for ablate, ablate_str in zip(ablate_params, ablate_params_str):
     for i in ablate:
 
         config_name = f"{ablate_str}_{i}"
-        with open(f"{config_name}.json", "r") as f:
+        with open(f"ablation/configs/{config_name}.json", "r") as f:
             config = json.load(f)
 
         n_flow_config = config["n_flow"]
@@ -138,6 +139,6 @@ for ablate, ablate_str in zip(ablate_params, ablate_params_str):
 
             ### After the normalizing flow model is trained, save the model
             torch.save(norm_flow, f"ablation/models/cnf_model_ablation_{ablate_str}_{i}_{num_run}.pth")
-
+            print(f"Finished run: {ablate_str},  {i}, num_run:{num_run}")
 
 
