@@ -8,7 +8,7 @@ from scipy.stats import entropy
 
 
 def kl_div_histogram(x, y):
-    px, bins = np.histogram(x, bins=1500, density=False)
+    px, bins = np.histogram(x, bins=25, density=False)
     py, _ = np.histogram(y, bins=bins, density=False)
 
     px = px.astype(float)
