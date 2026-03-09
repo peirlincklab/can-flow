@@ -92,6 +92,9 @@ for i, model in enumerate(models):
     df = pd.read_pickle(f"../data_models_saved/data/dataframes_clinical_info/df_{model}_clinical.pkl")
 
     if model == 'real':
+
+        df = df.drop(index=1131)
+
         x_confounders_model = x_confounders[df["Index"]]
 
         female_ind = np.where(x_confounders_model[:, 2] == 1)[0]
