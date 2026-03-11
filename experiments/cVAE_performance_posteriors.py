@@ -28,7 +28,8 @@ def reparametrize(mean, logvar):
     return mean + eps * std
 
 
-def t_sne(z, female_indices, male_indices, mod_str):
+def t_sne(z, female_indices, male_indices, large_pheno_indices, small_pheno_indices, mod_str):
+
     folder = "../figures_experiments/t_sne_approximations/cvae_posteriors/"
     os.makedirs(folder, exist_ok=True)
 
@@ -45,20 +46,49 @@ def t_sne(z, female_indices, male_indices, mod_str):
     xx, yy = np.meshgrid(np.linspace(xmin, xmax, 500),
                          np.linspace(ymin, ymax, 500))
 
+    ### Compute the indices
+    female_large_pheno_indices = np.intersect1d(female_indices, large_pheno_indices)
+    female_small_pheno_indices = np.intersect1d(female_indices, small_pheno_indices)
+
+    male_large_pheno_indices = np.intersect1d(male_indices, large_pheno_indices)
+    male_small_pheno_indices = np.intersect1d(male_indices, small_pheno_indices)
+
+    excluded_female = np.union1d(female_large_pheno_indices, female_small_pheno_indices)
+    excluded_male = np.union1d(male_large_pheno_indices, male_small_pheno_indices)
+
+    remaining_female = np.setdiff1d(female_indices, excluded_female)
+    remaining_male = np.setdiff1d(male_indices, excluded_male)
+
+
     plt.figure(figsize=(10, 7))
-    plt.scatter(z_tsne[female_indices, 0], z_tsne[female_indices, 1],
-                color='purple', marker='o', label='female real', alpha=0.15)
-    plt.scatter(z_tsne[male_indices, 0], z_tsne[male_indices, 1],
-                color='teal', marker='o', label='male real', alpha=0.15)
+
+    plt.scatter(z_tsne[female_small_pheno_indices, 0], z_tsne[female_small_pheno_indices, 1],
+                color='purple', marker='v', label='female real', alpha=0.85)
+
+    plt.scatter(z_tsne[female_large_pheno_indices, 0], z_tsne[female_large_pheno_indices, 1],
+                color='teal', marker='^', label='female real', alpha=0.85)
+
+    plt.scatter(z_tsne[male_small_pheno_indices, 0], z_tsne[male_small_pheno_indices, 1],
+                color='purple', marker='v', label='male real', alpha=0.85)
+
+    plt.scatter(z_tsne[male_large_pheno_indices, 0], z_tsne[male_large_pheno_indices, 1],
+                color='teal', marker='^', label='male real', alpha=0.85)
+
+    plt.scatter(z_tsne[remaining_female, 0], z_tsne[remaining_female, 1],
+                color='purple', marker='o', alpha=0.25)
+
+    plt.scatter(z_tsne[remaining_male, 0], z_tsne[remaining_male, 1],
+                color='teal', marker='o', alpha=0.25)
+
     # KDE for females
     f_kde = gaussian_kde(np.vstack([z_tsne[female_indices, 0], z_tsne[female_indices, 1]]))
     f_z = f_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
-    plt.contour(xx, yy, f_z, colors='purple', levels=7, linewidths=1.6)
+    plt.contour(xx, yy, f_z, colors='purple', levels=7, linewidths=1.6, alpha=0.9)
 
     # KDE for males
     m_kde = gaussian_kde(np.vstack([z_tsne[male_indices, 0], z_tsne[male_indices, 1]]))
     m_z = m_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
-    plt.contour(xx, yy, m_z, colors='teal', levels=7, linewidths=1.6)
+    plt.contour(xx, yy, m_z, colors='teal', levels=7, linewidths=1.6, alpha=0.9)
     plt.savefig(folder + f"{mod_str}_posterior.svg")
     plt.close()
 
@@ -80,6 +110,15 @@ font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceS
 font_prop = font_manager.FontProperties(fname=font_path)
 rcParams['font.family'] = font_prop.get_name()
 
+seed = 44
+torch.manual_seed(seed)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+np.random.seed(seed)
+
 device = 'cuda'
 scaler = MinMaxScaler()
 
@@ -95,6 +134,12 @@ x_confounders = x_confounders.to_numpy()
 
 male_indices = np.where(x_confounders[:, 2].flatten() == 0)[0]
 female_indices = np.where(x_confounders[:, 2].flatten() == 1)[0]
+
+clinical = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
+
+large_lv_indices = np.array(clinical.loc[clinical['LV_Vol_mL'] > 140, 'Index'])
+small_lv_indices = np.array(clinical.loc[clinical['LV_Vol_mL'] < 95, 'Index'])
+
 
 frac_train = 0.7
 frac_valid = 0.15
@@ -162,7 +207,8 @@ for str, mod in zip(models_str, models):
     wd_sex = Wasserstein_distance(z_latent_female, z_latent_male)
     wd_male_female_vals.append(wd_sex)
 
-    t_sne(z=z_latent_all, male_indices=male_indices, female_indices=female_indices, mod_str=str)
+    t_sne(z=z_latent_all, male_indices=male_indices, female_indices=female_indices, mod_str=str,
+          small_pheno_indices=small_lv_indices, large_pheno_indices=large_lv_indices)
 
 
 ### Compute Wasserstein distance between latent distribution and gaussian for real/AE distribution
