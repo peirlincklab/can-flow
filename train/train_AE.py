@@ -41,7 +41,7 @@ NumValidSamples = int(NumSamples * frac_valid)
 NumTestSamples = NumSamples - NumTrainSamples - NumValidSamples
 
 
-momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
