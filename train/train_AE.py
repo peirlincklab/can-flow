@@ -25,23 +25,16 @@ class Data(data.Dataset):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
-batch_size_frac = 0.15
+batch_size_frac = 0.20
 
 frac_train = 0.7
 frac_valid = 0.15
-epochs = 2000
+epochs = 4500
 lrate = 2e-4
-
-NumSamples = 2274
 
 latent_dimension = 44
 
-NumTrainSamples = int(NumSamples * frac_train)
-NumValidSamples = int(NumSamples * frac_valid)
-NumTestSamples = NumSamples - NumTrainSamples - NumValidSamples
-
-
-momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
@@ -49,10 +42,19 @@ momenta = momenta.reshape((2274, 720, 3))
 ### Exclude outliers and participants that withdrew from the study
 momenta = np.delete(momenta, [1746, 1831], axis=0)
 
-outliers = np.load('../utils/outliers_indices.npy')
+outliers = np.load('utils/outliers_indices.npy')
 mask = np.ones(momenta.shape[0], dtype=bool)
 mask[outliers] = False
+
 momenta = momenta[mask]
+
+
+NumSamples = momenta.shape[0]
+
+NumTrainSamples = int(NumSamples * frac_train)
+NumValidSamples = int(NumSamples * frac_valid)
+NumTestSamples = NumSamples - NumTrainSamples - NumValidSamples
+
 
 X_train_momenta = momenta[:NumTrainSamples, :, :].reshape((NumTrainSamples, 3, 8, 9, 10))
 X_valid_momenta = momenta[NumTrainSamples:NumTrainSamples + NumValidSamples, :, :].reshape((NumValidSamples, 3, 8, 9, 10))
