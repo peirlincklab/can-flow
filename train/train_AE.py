@@ -46,6 +46,14 @@ momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedPar
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
 
+### Exclude outliers and participants that withdrew from the study
+momenta = np.delete(momenta, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(momenta.shape[0], dtype=bool)
+mask[outliers] = False
+momenta = momenta[mask]
+
 X_train_momenta = momenta[:NumTrainSamples, :, :].reshape((NumTrainSamples, 3, 8, 9, 10))
 X_valid_momenta = momenta[NumTrainSamples:NumTrainSamples + NumValidSamples, :, :].reshape((NumValidSamples, 3, 8, 9, 10))
 X_test_momenta = momenta[NumTrainSamples + NumValidSamples:, :, :].reshape((NumTestSamples, 3, 8, 9, 10))
