@@ -53,7 +53,7 @@ frac_train = 0.7
 frac_valid = 0.15
 epochs = 2000
 lrate = 2e-4
-beta = 1e-1
+beta = 1e-6
 
 latent_dimension = 44
 
