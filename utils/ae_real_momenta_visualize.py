@@ -7,7 +7,7 @@ template = pv.read(r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\template.vt
 input_dir = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Reference_Reconstructed_Momenta"
 
 
-NumAll = 2274
+NumAll = 2208
 meshes_real = []
 pbar = tqdm(total=NumAll, desc='Loading anatomies...', leave=True)
 for i in range(NumAll):

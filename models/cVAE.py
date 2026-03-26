@@ -13,12 +13,13 @@ class VAE_Encoder(nn.Module):
         self.mlp_conf = nn.Linear(in_features=cond_dim, out_features=720 * 1)
 
         self.conv1 = nn.Conv3d(in_channels=4, out_channels=32, kernel_size=(1, 1, 1), stride=1)  ### 3 + 1 for condition
-        self.conv2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(2, 2, 2), stride=1)
-        self.conv3 = nn.Conv3d(in_channels=64, out_channels=128, kernel_size=(3, 3, 3), stride=2)
+        self.conv2 = nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(2, 2, 2), stride=1)
+        self.conv3 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(1, 1, 1), stride=1)
+        self.conv4 = nn.Conv3d(in_channels=64, out_channels=128, kernel_size=(2, 2, 2), stride=1)
 
         self.flatten = nn.Flatten()
 
-        self.fc_latent = nn.Linear(128 * 3 * 3 * 4, 2 * latent_dim)
+        self.fc_latent = nn.Linear(128 * 6 * 7 * 8, 2 * latent_dim)
 
     def forward(self, x, x_conf):
         conf_embedding = F.gelu(self.mlp_conf(x_conf))
@@ -29,6 +30,7 @@ class VAE_Encoder(nn.Module):
         x = F.gelu(self.conv1(x))
         x = F.gelu(self.conv2(x))
         x = F.gelu(self.conv3(x))
+        x = F.gelu(self.conv4(x))
 
         x = self.flatten(x)
 
@@ -49,12 +51,12 @@ class VAE_Decoder(nn.Module):
             nn.Linear(embed_dim_conf, embed_dim_conf)
         )
 
-        self.fc = nn.Linear(latent_dim + embed_dim_conf, 128 * 3 * 3 * 4)
+        self.fc = nn.Linear(latent_dim + embed_dim_conf, 128 * 6 * 7 * 8)
 
-        self.deconv1 = nn.ConvTranspose3d(in_channels=128, out_channels=64, kernel_size=(3, 3, 3), stride=2,
-                                          output_padding=(0, 1, 0))
-        self.deconv2 = nn.ConvTranspose3d(in_channels=64, out_channels=32, kernel_size=(2, 2, 2), stride=1)
-        self.deconv3 = nn.ConvTranspose3d(in_channels=32, out_channels=3, kernel_size=(1, 1, 1), stride=1)
+        self.deconv1 = nn.ConvTranspose3d(in_channels=128, out_channels=64, kernel_size=(2, 2, 2), stride=1)
+        self.deconv2 = nn.ConvTranspose3d(in_channels=64, out_channels=32, kernel_size=(1, 1, 1), stride=1)
+        self.deconv3 = nn.ConvTranspose3d(in_channels=32, out_channels=32, kernel_size=(2, 2, 2), stride=1)
+        self.deconv4 = nn.ConvTranspose3d(in_channels=32, out_channels=3, kernel_size=(1, 1, 1), stride=1)
 
     def forward(self, z, x_conf):
         x_conf_embed = self.conf_embedding(x_conf)
@@ -63,12 +65,13 @@ class VAE_Decoder(nn.Module):
 
         x = F.gelu(self.fc(x))
 
-        x = x.view(-1, 128, 3, 3, 4)
+        x = x.view(-1, 128, 6, 7, 8)
 
         x = F.gelu(self.deconv1(x))
         x = F.gelu(self.deconv2(x))
+        x = F.gelu(self.deconv3(x))
 
-        x = self.deconv3(x)
+        x = self.deconv4(x)
 
         return x
 

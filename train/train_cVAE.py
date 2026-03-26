@@ -4,6 +4,7 @@ from models.cVAE import *
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+import os
 
 
 
@@ -25,6 +26,22 @@ class Data(data.Dataset):
 
         return data_point_x, data_point_y
 
+
+def set_seed(seed: int = 42):
+    np.random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if using multiple GPUs
+
+    # For reproducibility
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(42)
+
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
@@ -38,16 +55,27 @@ epochs = 2000
 lrate = 2e-4
 beta = 1e-1
 
-NumAll = 2274
-NumTrainSamples = int(NumAll * frac_train)
-NumValidSamples = int(NumAll * frac_valid)
-
-
 latent_dimension = 44
 
 momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+
 momenta = np.delete(momenta, 0, axis=0)
-momenta = momenta.reshape((NumAll, 720, 3))
+momenta = momenta.reshape((2274, 720, 3))
+
+### Exclude outliers and participants that withdrew from the study
+momenta = np.delete(momenta, [1746, 1831], axis=0)
+
+outliers = np.load('utils/outliers_indices.npy')
+mask = np.ones(momenta.shape[0], dtype=bool)
+mask[outliers] = False
+
+momenta = momenta[mask]
+
+
+NumSamples = momenta.shape[0]
+
+NumTrainSamples = int(NumSamples * frac_train)
+NumValidSamples = int(NumSamples * frac_valid)
 
 X_train_momenta = momenta[:NumTrainSamples, :, :].reshape((NumTrainSamples, 3, 8, 9, 10))
 X_valid_momenta = momenta[NumTrainSamples:NumTrainSamples + NumValidSamples, :, :].reshape((NumValidSamples, 3, 8, 9, 10))
@@ -62,6 +90,12 @@ x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, Fals
 x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
+
+
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+x_confounders = x_confounders[mask]
+
 
 X_train_confounders = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 X_valid_confounders = scaler.transform(x_confounders[NumTrainSamples:NumTrainSamples+NumValidSamples, :])

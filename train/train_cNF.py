@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 import torch.utils.data as data
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-
+import os
 
 class Data(data.Dataset):
 
@@ -24,12 +24,25 @@ class Data(data.Dataset):
         return data_point_x, data_point_y
 
 
+def set_seed(seed: int = 42):
+    np.random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if using multiple GPUs
+
+    # For reproducibility
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(42)
+
 
 scaler = MinMaxScaler()
 
-
-#x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
-x_confounders = pd.read_excel(r"/home/kostas/home/metadata_final.xlsx")
+x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
+# x_confounders = pd.read_excel(r"/home/kostas/home/metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
 x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
@@ -37,6 +50,16 @@ x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, Fals
 x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
+
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
