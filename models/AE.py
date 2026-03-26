@@ -11,13 +11,13 @@ class Encoder(nn.Module):
         super().__init__()
 
         self.conv1 = nn.Conv3d(in_channels=3, out_channels=32, kernel_size=(1, 1, 1), stride=1).to('cuda')
-        self.conv2 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(2, 2, 2), stride=1).to('cuda')
-        self.conv3 = nn.Conv3d(in_channels=64, out_channels=128, kernel_size=(1, 1, 1), stride=1).to('cuda')
-        self.conv4 = nn.Conv3d(in_channels=128, out_channels=256, kernel_size=(2, 2, 2), stride=1).to('cuda')
+        self.conv2 = nn.Conv3d(in_channels=32, out_channels=32, kernel_size=(2, 2, 2), stride=1).to('cuda')
+        self.conv3 = nn.Conv3d(in_channels=32, out_channels=64, kernel_size=(1, 1, 1), stride=1).to('cuda')
+        self.conv4 = nn.Conv3d(in_channels=64, out_channels=128, kernel_size=(2, 2, 2), stride=1).to('cuda')
 
         self.flatten = nn.Flatten().to('cuda')
 
-        self.fc_latent = nn.Linear(256 * 6 * 7 * 8, latent_dim).to('cuda')
+        self.fc_latent = nn.Linear(128 * 6 * 7 * 8, latent_dim).to('cuda')
 
 
     def forward(self, x):
@@ -38,11 +38,11 @@ class Decoder(nn.Module):
     def __init__(self, latent_dim):
         super().__init__()
 
-        self.fc = nn.Linear(latent_dim, 256 * 6 * 7 * 8).to('cuda')
+        self.fc = nn.Linear(latent_dim, 128 * 6 * 7 * 8).to('cuda')
 
-        self.deconv1 = nn.ConvTranspose3d(in_channels=256, out_channels=128, kernel_size=(2, 2, 2), stride=1).to('cuda')
-        self.deconv2 = nn.ConvTranspose3d(in_channels=128, out_channels=64, kernel_size=(1, 1, 1), stride=1).to('cuda')
-        self.deconv3 = nn.ConvTranspose3d(in_channels=64, out_channels=32, kernel_size=(2, 2, 2), stride=1).to('cuda')
+        self.deconv1 = nn.ConvTranspose3d(in_channels=128, out_channels=64, kernel_size=(2, 2, 2), stride=1).to('cuda')
+        self.deconv2 = nn.ConvTranspose3d(in_channels=64, out_channels=32, kernel_size=(1, 1, 1), stride=1).to('cuda')
+        self.deconv3 = nn.ConvTranspose3d(in_channels=32, out_channels=32, kernel_size=(2, 2, 2), stride=1).to('cuda')
         self.deconv4 = nn.ConvTranspose3d(in_channels=32, out_channels=3, kernel_size=(1, 1, 1), stride=1).to('cuda')
 
 
@@ -50,7 +50,7 @@ class Decoder(nn.Module):
 
         x = F.gelu(self.fc(z))
 
-        x = x.view(-1, 256, 6, 7, 8)
+        x = x.view(-1, 128, 6, 7, 8)
 
         x = F.gelu(self.deconv1(x))
         x = F.gelu(self.deconv2(x))

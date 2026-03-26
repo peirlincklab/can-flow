@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 import torch.utils.data as data
 from models.AE import ConvAE, TrainerAE
 import numpy as np
+import os
 
 
 class Data(data.Dataset):
@@ -20,6 +21,23 @@ class Data(data.Dataset):
 
         return data_point_x
 
+
+def set_seed(seed: int = 42):
+    np.random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if using multiple GPUs
+
+    # For reproducibility
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    # For newer PyTorch versions
+    torch.use_deterministic_algorithms(True)
+
+set_seed(42)
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
