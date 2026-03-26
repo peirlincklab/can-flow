@@ -34,9 +34,6 @@ def set_seed(seed: int = 42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # For newer PyTorch versions
-    torch.use_deterministic_algorithms(True)
-
 set_seed(42)
 
 
@@ -47,7 +44,7 @@ batch_size_frac = 0.20
 
 frac_train = 0.7
 frac_valid = 0.15
-epochs = 4500
+epochs = 4000
 lrate = 2e-4
 
 latent_dimension = 44
