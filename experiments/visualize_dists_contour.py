@@ -68,8 +68,18 @@ x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
 
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
+
 df_real = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
-df_real = df_real.drop(index=1131)
+df_real = df_real.drop(index=1106)
 
 
 min_bmi_real = min(x_confounders[df_real['Index']][:, 0])
@@ -93,7 +103,7 @@ for i, model in enumerate(models):
 
     if model == 'real':
 
-        df = df.drop(index=1131)
+        df = df.drop(index=1106)
 
         x_confounders_model = x_confounders[df["Index"]]
 

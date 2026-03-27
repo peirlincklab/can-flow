@@ -98,60 +98,60 @@ def compute_mass_volume(input_dir, num_samples):
 
                 # Plot to check if the surfaces have been capped correctly
 
-                p = pv.Plotter(shape=(1, 4), title=f"Analysis: {filename}")
-
-                plane_zmin = pv.Plane(
-                    center=(0, 0, z_min),
-                    direction=(0, 0, 1),
-                    i_size=200,
-                    j_size=200
-                )
-
-                plane_zmax = pv.Plane(
-                    center=(0, 0, z_max),
-                    direction=(0, 0, 1),
-                    i_size=200,
-                    j_size=200
-                )
-
-                plane_clip = pv.Plane(
-                    center=(0, 0, clip_z),
-                    direction=(0, 0, 1),
-                    i_size=200,
-                    j_size=200
-                )
-
-                p.subplot(0, 0)
-                p.add_text("1. Clipped Mesh", font_size=10)
-                p.add_mesh(plane_clip, color="yellow", opacity=0.6, label="clip plane")
-                p.add_mesh(clipped, color="lightgrey", opacity=0.5, show_edges=True)
-
-                p.add_mesh(plane_zmin, color="green", opacity=0.4, label="z_min")
-                p.add_mesh(plane_zmax, color="red", opacity=0.4, label="z_max")
-
-
-
-                # Panel 1: Total Clipped Model (Epicardium)
-                p.subplot(0, 1)
-                p.add_text("1. Clipped Mesh", font_size=10)
-                p.add_mesh(clipped, color="lightgrey", opacity=0.5, show_edges=True)
-
-                # Panel 2: The Cavities (LV and RV)
-                p.subplot(0, 2)
-                p.add_text(f"2. Cavities\nLV: {lv_data['volume']:.1f}mL | RV: {rv_data['volume']:.1f}mL", font_size=10)
-                p.add_mesh(lv_data['mesh_obj'], color="red", label="LV")
-                p.add_mesh(rv_data['mesh_obj'], color="blue", label="RV")
-
-                # Panel 3: Myocardium Visualization
-                # We show the Myocardium by plotting the Epicardium and "cutting out" the cavities
-                p.subplot(0, 3)
-                p.add_text(f"3. Myocardium\nMass: {myo_mass:.1f}g", font_size=10)
-                p.add_mesh(v_epi_data['mesh_obj'], color="pink", opacity=0.3)  # The outer boundary
-                p.add_mesh(lv_data['mesh_obj'], color="white", opacity=1.0)  # Visual "hole" for LV
-                p.add_mesh(rv_data['mesh_obj'], color="white", opacity=1.0)  # Visual "hole" for RV
-
-                p.link_views()
-                p.show()
+                # p = pv.Plotter(shape=(1, 4), title=f"Analysis: {filename}")
+                #
+                # plane_zmin = pv.Plane(
+                #     center=(0, 0, z_min),
+                #     direction=(0, 0, 1),
+                #     i_size=200,
+                #     j_size=200
+                # )
+                #
+                # plane_zmax = pv.Plane(
+                #     center=(0, 0, z_max),
+                #     direction=(0, 0, 1),
+                #     i_size=200,
+                #     j_size=200
+                # )
+                #
+                # plane_clip = pv.Plane(
+                #     center=(0, 0, clip_z),
+                #     direction=(0, 0, 1),
+                #     i_size=200,
+                #     j_size=200
+                # )
+                #
+                # p.subplot(0, 0)
+                # p.add_text("1. Clipped Mesh", font_size=10)
+                # p.add_mesh(plane_clip, color="yellow", opacity=0.6, label="clip plane")
+                # p.add_mesh(clipped, color="lightgrey", opacity=0.5, show_edges=True)
+                #
+                # p.add_mesh(plane_zmin, color="green", opacity=0.4, label="z_min")
+                # p.add_mesh(plane_zmax, color="red", opacity=0.4, label="z_max")
+                #
+                #
+                #
+                # # Panel 1: Total Clipped Model (Epicardium)
+                # p.subplot(0, 1)
+                # p.add_text("1. Clipped Mesh", font_size=10)
+                # p.add_mesh(clipped, color="lightgrey", opacity=0.5, show_edges=True)
+                #
+                # # Panel 2: The Cavities (LV and RV)
+                # p.subplot(0, 2)
+                # p.add_text(f"2. Cavities\nLV: {lv_data['volume']:.1f}mL | RV: {rv_data['volume']:.1f}mL", font_size=10)
+                # p.add_mesh(lv_data['mesh_obj'], color="red", label="LV")
+                # p.add_mesh(rv_data['mesh_obj'], color="blue", label="RV")
+                #
+                # # Panel 3: Myocardium Visualization
+                # # We show the Myocardium by plotting the Epicardium and "cutting out" the cavities
+                # p.subplot(0, 3)
+                # p.add_text(f"3. Myocardium\nMass: {myo_mass:.1f}g", font_size=10)
+                # p.add_mesh(v_epi_data['mesh_obj'], color="pink", opacity=0.3)  # The outer boundary
+                # p.add_mesh(lv_data['mesh_obj'], color="white", opacity=1.0)  # Visual "hole" for LV
+                # p.add_mesh(rv_data['mesh_obj'], color="white", opacity=1.0)  # Visual "hole" for RV
+                #
+                # p.link_views()
+                # p.show()
 
 
 

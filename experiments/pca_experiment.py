@@ -48,8 +48,8 @@ def visualize_1d_pca(real_rb, cnf_rb, cvae_rb, num_toplot):
         d_vae = kde_vae(x_vae)
 
         plt.figure()
-        plt.plot(x_vae, d_vae, color="#CC79A7")
-        plt.fill_between(x_vae, d_vae, color="#CC79A7", alpha=0.15)
+        plt.plot(x_vae, d_vae, color="orange")
+        plt.fill_between(x_vae, d_vae, color="orange", alpha=0.15)
         plt.plot(x_ref, d_ref, color='black')
         plt.fill_between(x_ref, d_ref, color='black', alpha=0.15)
         plt.plot(x_nf, d_nf, color="#56B4E9")
@@ -124,7 +124,7 @@ def PCA(reference_group, generated_group, num_components, random_svd=False):
 
 
 
-seed = 44
+seed = 22
 torch.manual_seed(seed)
 
 if torch.cuda.is_available():
@@ -169,12 +169,22 @@ scaler = MinMaxScaler()
 momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
-momenta_reference = momenta.transpose(1, 2, 0).reshape(720 * 3, 2274)
+
+### Exclude outliers and participants that withdrew from the study
+momenta = np.delete(momenta, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(momenta.shape[0], dtype=bool)
+mask[outliers] = False
+
+momenta = momenta[mask]
+
+momenta_reference = momenta.transpose(1, 2, 0).reshape(720 * 3, momenta.shape[0])
 
 N_half = int(momenta_reference.shape[1] / 2)
 
 ### Load synthetic momenta from generative models
-path_generated = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies"
+path_generated = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch"
 
 
 ### First experiment
@@ -297,7 +307,7 @@ plt.close()
 
 ### Figure 2 --- 1D distributions of PCA reduced basis coefficients of momenta, for different generative models
 visualize_1d_pca(real_rb=reference_dists_rb, cnf_rb=models_dists_rb[0],
-                 cvae_rb=models_dists_rb[2], num_toplot=10)
+                 cvae_rb=models_dists_rb[1], num_toplot=10)
 
 
 
@@ -312,6 +322,10 @@ x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, Fals
 x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
+
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+x_confounders = x_confounders[mask]
 
 sex_info = x_confounders[:, 2]
 male_indices = np.where(sex_info.flatten() == 0)[0]

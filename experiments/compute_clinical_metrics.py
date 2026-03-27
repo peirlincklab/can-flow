@@ -29,7 +29,7 @@ def filter_real_data_subgroup(sex_subgroup, age_subgroup, bmi_subgroup):
 
     os.makedirs(r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Targeted_Reference", exist_ok=True)
     j = 0
-    for i in range(2274):
+    for i in range(2208):
         if i in final_indices:
             src = rf"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Reference_Momenta\Shooting_Momenta_{i}"
             dst = rf"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Targeted_Reference\Shooting_Momenta_{j}"
@@ -60,7 +60,7 @@ font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceS
 font_prop = font_manager.FontProperties(fname=font_path)
 rcParams['font.family'] = font_prop.get_name()
 
-input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies"
+input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch"
 
 models_dir = ['Female_gen_nf', 'Male_gen_nf',
               'Female_gen_vae1', 'Male_gen_vae1',
@@ -75,7 +75,7 @@ models_dir = ['Female_gen_nf', 'Male_gen_nf',
 
 ### Compute clinical metrics for real anatomies
 input_dir_real = input_dir_general + "\Reference_Momenta"
-df_real = compute_mass_volume(input_dir=input_dir_real, num_samples=2274)
+df_real = compute_mass_volume(input_dir=input_dir_real, num_samples=2208)
 
 
 ### For targeted data

@@ -62,7 +62,7 @@ path_init = "/home/kostas/home/Gen_Metrics_Exp_Files"
 
 models = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
 
-real_pcs = load_pcs_real(num_momenta_samples=2274)
+real_pcs = load_pcs_real(num_momenta_samples=2208)
 N_subsample = 600 ### subsample the real dataset, so that the real and generated sets have equal size
 
 num_runs_stoch = 4

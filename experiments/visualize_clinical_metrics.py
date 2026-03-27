@@ -61,13 +61,13 @@ decoder = torch.load("../data_models_saved/models/ae_decoder.pth", weights_only=
 
 
 frac_train = 0.7
-NumAll = 2274
+NumAll = 2208
 
 NumTrainSamples = int(NumAll * frac_train)
 
 
 df_real = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
-df_real = df_real.drop(index=1131)
+df_real = df_real.drop(index=1106)
 
 df_nf = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_nf_clinical.pkl')
 df_vae2 = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_vae2_clinical.pkl')

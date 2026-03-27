@@ -62,10 +62,6 @@ print(device)
 
 frac_train = 0.7
 
-NumAll =  2274
-NumTrainSamples = int(NumAll * frac_train)
-
-
 ### Load the confounders just to apply the scaler to the training data
 x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
@@ -75,6 +71,18 @@ x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, Fals
 x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
+
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+NumAll = x_confounders.shape[0]
+NumTrainSamples = int(NumAll * frac_train)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
 
 x_confounders_train = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 

@@ -6,17 +6,17 @@ from tqdm import tqdm
 
 def copy2clean(model_str, all_num, model_str_path, sex=None):
 
-    os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files\{model_str}_PCs", exist_ok=True)
+    os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\{model_str}_PCs", exist_ok=True)
 
     pbar = tqdm(total=all_num, desc='Copy PCs to clean folder...')
     for i in range(all_num):
 
-        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\{model_str_path}\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
+        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\{model_str_path}\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
 
         if sex is not None:
-            new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files\{model_str}_PCs/PointCloud_{i}_{sex}.vtk"
+            new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\{model_str}_PCs/PointCloud_{i}_{sex}.vtk"
         else:
-            new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files\{model_str}_PCs/PointCloud_{i}.vtk"
+            new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\{model_str}_PCs/PointCloud_{i}.vtk"
 
         # Ensure source exists
         if not os.path.exists(vtk_src_path):
@@ -36,9 +36,9 @@ def copy2clean(model_str, all_num, model_str_path, sex=None):
 
 
 
-os.makedirs( r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files", exist_ok=True)
+os.makedirs( r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files", exist_ok=True)
 
-num_all_real = 2274
+num_all_real = 2208
 num_gen = 300 ### 300 female and 300 male synthetic anatomies for each model
 
 ### copy the real pcs

@@ -67,14 +67,24 @@ print(device)
 
 frac_train = 0.7
 
-NumAll =  2274
-NumTrainSamples = int(NumAll * frac_train)
-
 
 momenta = np.loadtxt(r"../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
+
+### Exclude outliers and participants that withdrew from the study
+momenta = np.delete(momenta, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(momenta.shape[0], dtype=bool)
+mask[outliers] = False
+
+momenta = momenta[mask]
+
+NumAll =  momenta.shape[0]
+NumTrainSamples = int(NumAll * frac_train)
+
 save_write_momenta.save_momenta(type_momenta="Reference", momenta_tosave=momenta)
 
 
@@ -89,6 +99,11 @@ x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, Fals
 x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
+
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+x_confounders = x_confounders[mask]
+
 
 x_confounders_train = scaler.fit_transform(x_confounders[:NumTrainSamples, :])
 
