@@ -39,7 +39,7 @@ def load_pcs_real(num_momenta_samples):
 
     pbar = tqdm(total=num_momenta_samples, desc='Loading pcs...')
     for i in range(num_momenta_samples):
-        path = "/home/kostas/home/Gen_Metrics_Exp_Files_Targeted/Real_PCs"
+        path = "/home/kostas/home/Gen_Metrics_Exp_Files/Targeted_Real_PCs"
         filename = path + f"/PointCloud_{i}.vtk"
 
         points = pv.read(filename).points
@@ -53,7 +53,7 @@ def load_pcs_real(num_momenta_samples):
     return  points_all
 
 
-path_init = "/home/kostas/home/Gen_Metrics_Exp_Files_Targeted"
+path_init = "/home/kostas/home/Gen_Metrics_Exp_Files"
 
 models = ['nf', 'vae2', 'vae3']
 
@@ -71,7 +71,7 @@ for i in range(num_runs_stoch):
     for model in models:
 
         ### gen_pcs now will have 650 samples
-        gen_pcs = load_pcs_gen(path=path_init+f"/{model}_PCs", num_momenta_samples=650)
+        gen_pcs = load_pcs_gen(path=path_init+f"/Targeted_{model}_PCs", num_momenta_samples=650)
 
         mmd = MMD(S_g=gen_pcs, S_r=real_pcs_subsampled)
         cov = Coverage(S_g=gen_pcs, S_r=real_pcs_subsampled)

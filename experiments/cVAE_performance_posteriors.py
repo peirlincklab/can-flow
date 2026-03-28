@@ -16,7 +16,7 @@ def Wasserstein_distance(X, Y):
     a = np.ones(len(X)) / len(X)
     b = np.ones(len(Y)) / len(Y)
 
-    W = ot.sinkhorn2(a, b, M, reg=2.1)
+    W = ot.sinkhorn2(a, b, M, reg=10)
 
     return W
 
@@ -132,19 +132,28 @@ x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
 
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
 male_indices = np.where(x_confounders[:, 2].flatten() == 0)[0]
 female_indices = np.where(x_confounders[:, 2].flatten() == 1)[0]
 
 clinical = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
 
-large_lv_indices = np.array(clinical.loc[clinical['LV_Vol_mL'] > 140, 'Index'])
-small_lv_indices = np.array(clinical.loc[clinical['LV_Vol_mL'] < 95, 'Index'])
+large_lv_indices = np.array(clinical.loc[clinical['LV_Vol_mL'] > 170, 'Index'])
+small_lv_indices = np.array(clinical.loc[clinical['LV_Vol_mL'] < 110, 'Index'])
 
 
 frac_train = 0.7
 frac_valid = 0.15
 
-NumAll = 2274
+NumAll = x_confounders.shape[0]
 NumTrainSamples = int(frac_train * NumAll)
 NumValidSamples = int(frac_valid * NumAll)
 
@@ -161,7 +170,12 @@ X_all_confounders = torch.cat((X_train_confounders, X_valid_confounders, X_test_
 ### Load momenta
 momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 momenta = np.delete(momenta, 0, axis=0)
-momenta = momenta.reshape((NumAll, 720, 3))
+momenta = momenta.reshape((2274, 720, 3))
+
+### Exclude outliers and participants that withdrew from the study
+momenta = np.delete(momenta, [1746, 1831], axis=0)
+momenta = momenta[mask]
+
 momenta = momenta.reshape((NumAll, 3, 8, 9, 10))
 momenta = torch.tensor(momenta, dtype=torch.float32, device=device)
 

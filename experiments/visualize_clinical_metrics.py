@@ -67,7 +67,6 @@ NumTrainSamples = int(NumAll * frac_train)
 
 
 df_real = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
-df_real = df_real.drop(index=1106)
 
 df_nf = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_nf_clinical.pkl')
 df_vae2 = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_vae2_clinical.pkl')

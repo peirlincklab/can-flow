@@ -62,20 +62,14 @@ rcParams['font.family'] = font_prop.get_name()
 
 input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch"
 
-models_dir = ['Female_gen_nf', 'Male_gen_nf',
-              'Female_gen_vae1', 'Male_gen_vae1',
-              'Female_gen_vae2', 'Male_gen_vae2',
-              'Female_gen_vae3', 'Male_gen_vae3',
-              'Female_gen_vae4', 'Male_gen_vae4',
-              'Female_gen_vae5', 'Male_gen_vae5',
-              'Female_gen_vae6', 'Male_gen_vae6']
+models_dir = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
 
 
 # models_dir = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
 
 ### Compute clinical metrics for real anatomies
-input_dir_real = input_dir_general + "\Reference_Momenta"
-df_real = compute_mass_volume(input_dir=input_dir_real, num_samples=2208)
+input_dir_real = input_dir_general + "\Gen_Metrics_Exp_Files_Tagged\Real_PCs"
+df_real = compute_mass_volume(input_dir=input_dir_real, num_samples=2208, real=True)
 
 
 ### For targeted data
@@ -91,20 +85,20 @@ df_real = compute_mass_volume(input_dir=input_dir_real, num_samples=2208)
 dfs_generated = []
 indices_metadata = []
 for mod_dir in models_dir:
-    df = compute_mass_volume(input_dir=input_dir_general + fr"\{mod_dir}_Momenta", num_samples=300)
+    df = compute_mass_volume(input_dir=input_dir_general + rf"\Gen_Metrics_Exp_Files_Tagged\{mod_dir}_PCs", num_samples=300)
     dfs_generated.append(df)
     indices_metadata.append(df.shape[0])
 
 np.save("../data_models_saved/data/indices_metadata_clinical.npy", np.array(indices_metadata))
 
 
-df_nf = pd.concat([dfs_generated[0], dfs_generated[1]], axis=0, ignore_index=True)
-df_vae1 = pd.concat([dfs_generated[2], dfs_generated[3]], axis=0, ignore_index=True)
-df_vae2 = pd.concat([dfs_generated[4], dfs_generated[5]], axis=0, ignore_index=True)
-df_vae3 = pd.concat([dfs_generated[6], dfs_generated[7]], axis=0, ignore_index=True)
-df_vae4 = pd.concat([dfs_generated[8], dfs_generated[9]], axis=0, ignore_index=True)
-df_vae5 = pd.concat([dfs_generated[10], dfs_generated[11]], axis=0, ignore_index=True)
-df_vae6 = pd.concat([dfs_generated[12], dfs_generated[13]], axis=0, ignore_index=True)
+df_nf = dfs_generated[0]
+df_vae1 = dfs_generated[1]
+df_vae2 = dfs_generated[2]
+df_vae3 = dfs_generated[3]
+df_vae4 = dfs_generated[4]
+df_vae5 = dfs_generated[5]
+df_vae6 = dfs_generated[6]
 
 
 # df_nf = dfs_generated[0]

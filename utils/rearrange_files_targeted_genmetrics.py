@@ -8,13 +8,13 @@ import numpy as np
 
 def copy2clean(model_str, all_num, model_str_path):
 
-    os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files_Targeted\{model_str}_PCs", exist_ok=True)
+    os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\Targeted_{model_str}_PCs", exist_ok=True)
 
     pbar = tqdm(total=all_num, desc='Copy PCs to clean folder...')
     for i in range(all_num):
 
-        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\{model_str_path}\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
-        new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files_Targeted\{model_str}_PCs\PointCloud_{i}.vtk"
+        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\{model_str_path}\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
+        new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\Targeted_{model_str}_PCs\PointCloud_{i}.vtk"
 
         # Ensure source exists
         if not os.path.exists(vtk_src_path):
@@ -34,7 +34,6 @@ def copy2clean(model_str, all_num, model_str_path):
 
 
 
-os.makedirs( r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files_Targeted", exist_ok=True)
 
 ### real patients of the subgroup
 x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
@@ -46,22 +45,31 @@ x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
 
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
 ### Find the indices of the real subgroup
 male_indices = np.where(x_confounders[:, 2] == 0)[0]
 x_conf_male = x_confounders[male_indices]
 
 subgroup_indices = np.where(x_conf_male[:, 1] > 58)[0]
 
-os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files_Targeted\Real_PCs", exist_ok=True)
+os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\Targeted_Real_PCs", exist_ok=True)
 
-NumAll = 2274
+NumAll = 2208
 j=0
 pbar = tqdm(total=NumAll, desc='Copy PCs to clean folder...')
 for i in range(NumAll):
     if i in subgroup_indices:
 
-        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Reference_Momenta\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
-        new_folder_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Gen_Metrics_Exp_Files_Targeted\Real_PCs\PointCloud_{j}.vtk"
+        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Reference_Momenta\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
+        new_folder_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files\Targeted_Real_PCs\PointCloud_{j}.vtk"
 
         # Ensure source exists
         if not os.path.exists(vtk_src_path):

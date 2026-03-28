@@ -79,8 +79,6 @@ x_confounders = x_confounders[mask]
 
 
 df_real = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
-df_real = df_real.drop(index=1106)
-
 
 min_bmi_real = min(x_confounders[df_real['Index']][:, 0])
 max_bmi_real = max(x_confounders[df_real['Index']][:, 0])
@@ -103,18 +101,13 @@ for i, model in enumerate(models):
 
     if model == 'real':
 
-        df = df.drop(index=1106)
-
         x_confounders_model = x_confounders[df["Index"]]
 
         female_ind = np.where(x_confounders_model[:, 2] == 1)[0]
         male_ind = np.where(x_confounders_model[:, 2] == 0)[0]
     else:
-        female_ind = df["Index"][:gen_indices[2 * (i - 1)]]
-        male_ind = df["Index"][gen_indices[2 * (i - 1)]:]
-
-        x_confounders_model_female = sampled_confounders_female[female_ind]
-        x_confounders_model_male = sampled_confounders_male[male_ind]
+        x_confounders_model_female = sampled_confounders_female
+        x_confounders_model_male = sampled_confounders_male
 
         x_confounders_model = np.concatenate([x_confounders_model_female, x_confounders_model_male], axis=0)
 

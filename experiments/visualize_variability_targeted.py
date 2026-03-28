@@ -12,6 +12,16 @@ x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
 
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
+
 ### Find the indices of the real subgroup
 male_indices = np.where(x_confounders[:, 2] == 0)[0]
 x_conf_male = x_confounders[male_indices]
@@ -19,14 +29,14 @@ x_conf_male = x_confounders[male_indices]
 subgroup_indices = np.where(x_conf_male[:, 1] > 58)[0]
 
 ### Load all real shapes that belong to this subgroup
-input_dir = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Reference_Momenta"
+input_dir = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Reference_Momenta"
 
 ### load the template shape of the cohort
 ### each node's variance will be visualized on this template
-template = pv.read(r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\template.vtk")
+template = pv.read(r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\template.vtk")
 
 
-NumAll = 2274
+NumAll = 2208
 meshes_real = []
 for i in range(NumAll):
     if i in subgroup_indices:
@@ -47,7 +57,7 @@ models = ['nf', 'vae2', 'vae3']
 NumSynth = 650
 for model_str in models:
 
-    input_dir_synthetic = rf"C:\Users\kkevopoulos\Documents\Meshes_Anatomies\Targeted_{model_str}_Momenta"
+    input_dir_synthetic = rf"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Targeted_{model_str}_Momenta"
     meshes_synthetic = []
     for j in range(NumSynth):
         filename = input_dir_synthetic + f"\Shooting_Momenta_{j}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"

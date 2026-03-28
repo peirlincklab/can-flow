@@ -90,10 +90,19 @@ x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
 
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
 male_indices = np.where(x_confounders[:, 2].flatten() == 0)[0]
 female_indices = np.where(x_confounders[:, 2].flatten() == 1)[0]
 
-NumAll = 2274
+NumAll = 2208
 frac_train = 0.7
 frac_valid = 0.15
 

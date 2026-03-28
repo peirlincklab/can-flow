@@ -50,7 +50,7 @@ font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceS
 font_prop = font_manager.FontProperties(fname=font_path)
 rcParams['font.family'] = font_prop.get_name()
 
-input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies"
+input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Gen_Metrics_Exp_Files_Tagged"
 
 models_dir = ['Targeted_nf', 'Targeted_vae2', 'Targeted_vae3']
 
@@ -63,6 +63,15 @@ x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, Fals
 x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
+
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('../utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
 
 ### Find the indices of the real subgroup
 male_indices = np.where(x_confounders[:, 2] == 0)[0]
@@ -77,7 +86,7 @@ df_real = df_real.iloc[subgroup_indices]
 
 dfs_generated = []
 for mod_dir in models_dir:
-    df = compute_mass_volume(input_dir=input_dir_general + fr"\{mod_dir}_Momenta", num_samples=650)
+    df = compute_mass_volume(input_dir=input_dir_general + fr"\{mod_dir}_PCs", num_samples=650, real=True)
     dfs_generated.append(df)
 
 df_nf = dfs_generated[0]
