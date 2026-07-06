@@ -7,6 +7,40 @@ from tqdm import tqdm
 
 
 class VAE_Encoder(nn.Module):
+    """
+    Conditional 3D convolutional encoder for a variational autoencoder.
+
+    This encoder maps a 3D input representation and an associated conditioning
+    vector to the parameters of a latent Gaussian distribution.
+
+    Specifically, the encoder takes:
+        - a 3D input tensor `x` (momenta representation)
+        - a conditioning vector `x_conf`, (metadata: sex, age, BMI)
+
+    Parameters
+    ----------
+    latent_dim : int
+        Dimension of the latent space.
+    cond_dim : int
+
+    Input Shapes
+    ---------------------
+    x : torch.Tensor
+        Input tensor of shape `(batch_size, 3, 8, 9, 10)`.
+
+    x_conf : torch.Tensor
+        Conditioning tensor of shape `(batch_size, cond_dim)`.
+
+    Returns
+    -------
+    mu : torch.Tensor
+        Mean of the approximate posterior distribution.
+        Shape: `(batch_size, latent_dim)`.
+
+    logvar : torch.Tensor
+        Log-variance of the approximate posterior distribution.
+        Shape: `(batch_size, latent_dim)`.
+    """
     def __init__(self, latent_dim, cond_dim):
         super().__init__()
 
@@ -22,6 +56,28 @@ class VAE_Encoder(nn.Module):
         self.fc_latent = nn.Linear(128 * 6 * 7 * 8, 2 * latent_dim)
 
     def forward(self, x, x_conf):
+        """
+        Forward pass of the conditional VAE encoder.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape `(batch_size, 3, 8, 9, 10)`.
+
+        x_conf : torch.Tensor
+            Conditioning tensor of shape `(batch_size, cond_dim)`.
+
+        Returns
+        -------
+        mu : torch.Tensor
+            Mean vector of the latent Gaussian distribution.
+            Shape: `(batch_size, latent_dim)`.
+
+        logvar : torch.Tensor
+            Log-variance vector of the latent Gaussian distribution.
+            Shape: `(batch_size, latent_dim)`.
+        """
+
         conf_embedding = F.gelu(self.mlp_conf(x_conf))
         conf_embedding = conf_embedding.reshape(-1, 1, 8, 9, 10)
 
@@ -42,6 +98,40 @@ class VAE_Encoder(nn.Module):
 
 
 class VAE_Decoder(nn.Module):
+    """
+    Conditional 3D convolutional decoder for a variational autoencoder.
+
+    This decoder reconstructs a 3D output momenta representation from a latent vector
+    and an associated conditioning vector.
+
+    The decoder takes:
+        - a latent vector `z`, sampled from or representing the latent space
+        - a conditioning vector `x_conf` (metadata: sex, age, or BMI)
+
+    Parameters
+    ----------
+    latent_dim : int
+        Dimension of the latent space.
+
+    in_dim_conf : int
+        Dimension of the input conditioning vector.
+
+    embed_dim_conf : int
+        Dimension of the learned conditioning embedding.
+
+    Expected Input Shapes
+    ---------------------
+    z : torch.Tensor
+        Latent tensor of shape `(batch_size, latent_dim)`.
+
+    x_conf : torch.Tensor
+        Conditioning tensor of shape `(batch_size, in_dim_conf)`.
+
+    Returns
+    -------
+    x : torch.Tensor
+        Reconstructed 3D output momenta tensor of shape `(batch_size, 3, 8, 9, 10)`.
+    """
     def __init__(self, latent_dim, in_dim_conf, embed_dim_conf):
         super().__init__()
 
@@ -59,6 +149,22 @@ class VAE_Decoder(nn.Module):
         self.deconv4 = nn.ConvTranspose3d(in_channels=32, out_channels=3, kernel_size=(1, 1, 1), stride=1)
 
     def forward(self, z, x_conf):
+        """
+        Forward pass of the conditional VAE decoder.
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            Latent tensor of shape `(batch_size, latent_dim)`.
+
+        x_conf : torch.Tensor
+            Conditioning tensor of shape `(batch_size, in_dim_conf)`.
+
+        Returns
+        -------
+        x : torch.Tensor
+            Reconstructed 3D tensor of shape `(batch_size, 3, 8, 9, 10)`.
+        """
         x_conf_embed = self.conf_embedding(x_conf)
 
         x = torch.cat((z, x_conf_embed), dim=1)
@@ -77,6 +183,30 @@ class VAE_Decoder(nn.Module):
 
 
 class cVAE(nn.Module):
+    """
+    Conditional variational autoencoder.
+
+    This model combines a conditional encoder and a conditional decoder.
+
+    Parameters
+    ----------
+    latent_dim : int
+        Dimension of the latent space.
+
+    cond_dim : int
+        Dimension of the conditioning vector.
+
+    embed_dim_conf : int
+        Dimension of the conditioning embedding used inside the decoder.
+
+    Attributes
+    ----------
+    encoder : VAE_Encoder
+        Conditional encoder that maps `(x, x_conf)` to `mu` and `logvar`.
+
+    decoder : VAE_Decoder
+        Conditional decoder that maps `(z, x_conf)` to the reconstructed output.
+    """
     def __init__(self, latent_dim, cond_dim, embed_dim_conf):
         super().__init__()
 
@@ -84,12 +214,67 @@ class cVAE(nn.Module):
         self.decoder = VAE_Decoder(latent_dim, cond_dim, embed_dim_conf)
 
     def reparametrize(self, mean, logvar):
+        """
+                Apply the reparameterization trick.
+
+                Instead of sampling directly from N(mean, variance), the latent vector
+                is sampled as:
+
+                    z = mean + eps * std
+
+                where:
+                    std = exp(0.5 * logvar)
+                    eps ~ N(0, I)
+
+                Parameters
+                ----------
+                mean : torch.Tensor
+                    Mean of the latent Gaussian distribution.
+                    Shape: `(batch_size, latent_dim)`.
+
+                logvar : torch.Tensor
+                    Log-variance of the latent Gaussian distribution.
+                    Shape: `(batch_size, latent_dim)`.
+
+                Returns
+                -------
+                z : torch.Tensor
+                    Sampled latent vector.
+                    Shape: `(batch_size, latent_dim)`.
+                """
+
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
 
         return mean + eps * std
 
     def forward(self, x, x_conf):
+        """
+        Forward pass of the conditional variational autoencoder.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape `(batch_size, 3, 8, 9, 10)`.
+
+        x_conf : torch.Tensor
+            Conditioning tensor of shape `(batch_size, cond_dim)`.
+
+        Returns
+        -------
+        x_recon : torch.Tensor
+            Reconstructed output tensor.
+            Shape: `(batch_size, 3, 8, 9, 10)`.
+
+        mu : torch.Tensor
+            Mean of the approximate posterior latent distribution.
+            Shape: `(batch_size, latent_dim)`.
+
+        logvar : torch.Tensor
+            Log-variance of the approximate posterior latent distribution.
+            Shape: `(batch_size, latent_dim)`.
+        """
+
         mu, logvar = self.encoder(x, x_conf)
 
         z = self.reparametrize(mu, logvar)

@@ -1,8 +1,8 @@
 ### This file generates momenta for randomly sampled metadata vectors
 ### This file does not generate momenta for any specific population sub-group
-### For female and male individuals, randomly sample sex and BMI values
+### For female and male individuals, randomly sample age and BMI values within the range of real age and BMI values
 
-### Given the same sampled metadata, generate momenta for all generative models under investigation
+### Given the same sampled metadata, generate momenta for all generative models (CAN-FLOW and cVAEs)
 
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -12,6 +12,35 @@ from utils import save_write_momenta
 
 
 def generate_momenta(model_str, model, sampled_metadata):
+    """
+      Generate synthetic momenta using trained CAN-FLOW or trained cVAEs
+
+      If `model_str` is "nf", CAN-FLOW is used to generate momenta.
+
+      Otherwise, a cVAE is used to generate momenta.
+
+      Parameters
+      ----------
+      model_str : str
+          String identifying the type of generative model. If set to "nf", the
+          generative model is CAN-FLOW. Any other value assumes that a cVAE of a specific regularization strength is used.
+      model : torch.nn.Module
+          Generative model used to produce synthetic momenta.
+      sampled_metadata : torch.Tensor
+          Metadata used for conditional generation, with shape
+          (n_samples, n_metadata_features).
+
+      Returns
+      -------
+      np.ndarray
+          Generated synthetic momenta with shape (n_samples, 720, 3).
+
+      Notes
+      -----
+      For the non-normalizing-flow case, latent vectors are sampled on the CPU
+      and then moved to CUDA. Therefore, this function assumes that a CUDA device
+      is available.
+      """
     latent_dim = 44
 
     if model_str == 'nf':
@@ -30,6 +59,48 @@ def generate_momenta(model_str, model, sampled_metadata):
 
 
 def sample_metadata(num_samples, gender, x_confounders):
+    """
+        Generate synthetic metadata samples for females and males.
+
+        The function creates metadata samples containing BMI, age, and one-hot
+        encoded sex information. BMI and age values are sampled from the observed
+        ranges of the selected sex group in real population.
+
+        Parameters
+        ----------
+        num_samples : int
+            Number of metadata samples to generate.
+        gender : str
+            Sex group for which metadata should be generated. If set to "Female",
+            the generated sex encoding is [1, 0]. Any other value is treated as
+            male and encoded as [0, 1].
+        x_confounders : np.ndarray
+            Array containing observed metadata with shape
+            (n_samples, n_confounders). The expected column order is:
+
+            - `x_confounders[:, 0]`: BMI values
+            - `x_confounders[:, 1]`: age values
+            - `x_confounders[:, 2]`: first sex indicator
+
+        Returns
+        -------
+        np.ndarray
+            Generated metadata samples with shape (num_samples, 4). The columns
+            are ordered as:
+
+            - BMI
+            - age
+            - first sex indicator
+            - second sex indicator
+
+        Notes
+        -----
+        BMI values are sampled uniformly from the minimum to maximum BMI observed
+        in the selected sex group.
+
+        Age values are sampled as random integers from the minimum to maximum age
+        observed in the selected sex group.
+        """
 
     if gender == "Female":
         sex1 = 1
@@ -85,13 +156,12 @@ momenta = momenta[mask]
 NumAll =  momenta.shape[0]
 NumTrainSamples = int(NumAll * frac_train)
 
-save_write_momenta.save_momenta(type_momenta="Reference", momenta_tosave=momenta)
+# save_write_momenta.save_momenta(type_momenta="Reference", momenta_tosave=momenta)
 
 
-### Load the confounders just to apply the scaler to the training data
+### Load the metadata just to apply the scaler to the training data
 ### And also to compute the boundaries of the metadata parameter space
-# x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
-x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
+x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
 x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
@@ -148,11 +218,11 @@ cvae6.eval()
 
 
 
-
+### the number of cVAEs refers to the regularization strength: \beta=10^{-N}, where N is the number
 models_str = ['nf', 'vae1', 'vae2', 'vae3', 'vae4', 'vae5', 'vae6']
 models = [cnf, cvae1, cvae2, cvae3, cvae4, cvae5, cvae6]
 
-
+### generate synthetic cohorts of momenta with all generative models
 for str, mod in zip(models_str, models):
 
     generated_female = generate_momenta(model_str=str, model=mod, sampled_metadata=metadata_sampled_female)

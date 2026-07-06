@@ -25,9 +25,9 @@ def Coverage(S_g, S_r):
     matched_ref_indices = set()
     pbar = tqdm(total=len(S_g), desc='Compute Coverage...')
     for gen in S_g:
-        # Compute distances from this generated cloud to all reference clouds
+        ### Compute distances from this generated cloud to all reference clouds
         distances = [chamfer_distance(gen, ref) for ref in S_r]
-        # Find the reference cloud that is closest to this generated cloud
+        ### Find the reference cloud that is closest to this generated cloud
         closest_ref_idx = np.argmin(distances)
         matched_ref_indices.add(closest_ref_idx)
 
@@ -45,12 +45,12 @@ def chamfer_distance(pc1, pc2):
 
     pc1 = torch.tensor(pc1, dtype=torch.float32).to('cuda')
     pc2 = torch.tensor(pc2, dtype=torch.float32).to('cuda')
-    # pc1 → pc2
+    ### pc1 → pc2
     idx12 = knn(pc2, pc1, k=1)
     nn12 = pc2[idx12[1]]
     d12 = ((pc1 - nn12) ** 2).sum(dim=1)
 
-    # pc2 → pc1
+    ### pc2 → pc1
     idx21 = knn(pc1, pc2, k=1)
     nn21 = pc1[idx21[1]]
     d21 = ((pc2 - nn21) ** 2).sum(dim=1)

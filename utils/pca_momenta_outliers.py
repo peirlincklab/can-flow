@@ -31,7 +31,7 @@ md = np.array([
     for s in scores
 ])
 
-k = scores.shape[1]   # number of retained PCs
+k = scores.shape[1]   ### number of retained PCs
 threshold = np.sqrt(chi2.ppf(0.9999999999999, df=k))
 
 ### threshold

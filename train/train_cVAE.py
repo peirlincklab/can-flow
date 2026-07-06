@@ -16,11 +16,11 @@ class Data(data.Dataset):
         self.y = torch.tensor(y, dtype=torch.float32)
 
     def __len__(self):
-        # Number of data points we have.
+        ### Number of data points we have.
         return self.X.shape[0]
 
     def __getitem__(self, idx):
-        # Return the idx-th data point of the dataset
+        ### Return the idx-th data point of the dataset
         data_point_x = self.X[idx]
         data_point_y = self.y[idx]
 

@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 import pyvista as pv
 
+### This file generates the data visualized in Figure 8 of the manuscript
 
-x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
+
+x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
 x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
@@ -32,7 +34,7 @@ subgroup_indices = np.where(x_conf_male[:, 1] > 58)[0]
 input_dir = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Reference_Momenta"
 
 ### load the template shape of the cohort
-### each node's variance will be visualized on this template
+### each node's st.dev will be visualized on this template
 template = pv.read(r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\template.vtk")
 
 
@@ -52,7 +54,7 @@ meshes_real_std = meshes_real.std(axis=0)
 template['std_real'] = meshes_real_std
 
 
-### For each generative model (nf, vae2, vae3), load all synthetic shapes
+### For each generative model (can-flow, vae2, vae3), load all synthetic shapes
 models = ['nf', 'vae2', 'vae3']
 NumSynth = 650
 for model_str in models:
@@ -71,5 +73,5 @@ for model_str in models:
 
     template[f'std_{model_str}'] = meshes_synthetic_std
 
-template.save(f"../data_models_saved/data/template_with_variances.vtk")
+template.save(f"../data_models_saved/data/template_with_st_devs.vtk")
 

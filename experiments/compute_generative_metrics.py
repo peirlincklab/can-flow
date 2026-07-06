@@ -12,6 +12,22 @@ np.random.seed(42)
 
 
 def load_pcs_gen(path, num_momenta_samples):
+    """
+    Load the anatomies as point clouds, corresponding to a specified path.
+    Use this function to load synthetic anatomies
+
+    Parameters
+    ----------
+    path : str
+        Path where the point clouds are stored
+    num_momenta_samples : int
+        number of anatomies to be loaded
+
+    Returns
+    -------
+    np.ndarray
+        All point cloud anatomies, male and female, corresponding to this path
+    """
 
     points_all = []
 
@@ -39,6 +55,9 @@ def load_pcs_gen(path, num_momenta_samples):
 
 
 def load_pcs_real(num_momenta_samples):
+    """
+    Load real anatomies, similarly to the function above
+    """
 
     points_all = []
 

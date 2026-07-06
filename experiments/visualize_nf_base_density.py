@@ -9,6 +9,10 @@ import numpy as np
 from scipy.stats import gaussian_kde
 
 
+### This file visualizes the conditional base density of CAN-FLOW
+### This file is used to generate Figure B.14 of the manuscript
+
+
 seed = 80
 np.random.seed(seed)
 
@@ -19,6 +23,35 @@ torch.cuda.manual_seed_all(seed)
 
 
 def t_sne(z_base, female_indices, male_indices):
+    """
+        Compute and visualize a 2D t-SNE embedding of latent representations, colored by sex.
+
+        This function applies t-SNE to a set of latent representations and visualizes
+        the resulting two-dimensional embedding. Female and male samples are shown as
+        scatter points with separate colors. In addition, two-dimensional KDE contours
+        are plotted for each group to highlight the density structure of the embedded
+        latent space.
+
+
+        Parameters
+        ----------
+        z_base : numpy.ndarray
+            Array containing the latent vectors to be embedded with t-SNE.
+
+            Shape:
+
+            `(n_samples, n_latent_dimensions)`
+
+            where `n_samples` is the number of samples and `n_latent_dimensions`
+            is the dimensionality of the latent representation.
+
+        female_indices : array-like
+            index array selecting the female samples in `z_base`.
+
+        male_indices : array-like
+            index array selecting the male samples in `z_base`.
+        """
+
     folder = "../figures_experiments/t_sne_approximations/"
     os.makedirs(folder, exist_ok=True)
 
@@ -41,17 +74,16 @@ def t_sne(z_base, female_indices, male_indices):
                 color='purple', marker='o', label='female real', alpha=0.15)
     plt.scatter(z_tsne[male_indices, 0], z_tsne[male_indices, 1],
                 color='teal', marker='o', label='male real', alpha=0.15)
-    # KDE for females
+    ### KDE for females
     f_kde = gaussian_kde(np.vstack([z_tsne[female_indices, 0], z_tsne[female_indices, 1]]))
     f_z = f_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
     plt.contour(xx, yy, f_z, colors='purple', levels=7, linewidths=1.6)
 
-    # KDE for males
+    ### KDE for males
     m_kde = gaussian_kde(np.vstack([z_tsne[male_indices, 0], z_tsne[male_indices, 1]]))
     m_z = m_kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
     plt.contour(xx, yy, m_z, colors='teal', levels=7, linewidths=1.6)
-    plt.savefig(folder + f"nf_base_density.svg")
-    plt.close()
+    plt.show()
 
 
 
@@ -64,11 +96,11 @@ params = {
    'xtick.labelsize': 20,
    'ytick.labelsize': 20,
    'text.usetex': False,
-   'axes.linewidth': 2,
-   'xtick.major.width': 2,
-   'ytick.major.width': 2,
-   'xtick.major.size': 2,
-   'ytick.major.size': 2,
+   'axes.linewidth': 2.2,
+   'xtick.major.width': 2.2,
+   'ytick.major.width': 2.2,
+   'xtick.major.size': 2.2,
+   'ytick.major.size': 2.2,
 }
 plt.rcParams.update(params)
 font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceSansPro-Regular.otf'
@@ -81,7 +113,7 @@ device = 'cuda'
 scaler = MinMaxScaler()
 
 
-x_confounders = pd.read_excel(r"C:\Users\kkevopoulos\OneDrive - Delft University of Technology\Bureaublad\data_kostas_bivme\metadata_final.xlsx")
+x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
 x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
 x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
@@ -118,7 +150,7 @@ X_valid_confounders = torch.tensor(X_valid_confounders, dtype=torch.float32).to(
 X_test_confounders = torch.tensor(X_test_confounders, dtype=torch.float32).to(device)
 
 
-### Load cNF model to compute the learned distribution
+### Load CAN-FLOW to compute the learned base distribution
 normalizing_flow = torch.load("../data_models_saved/models/cnf_model.pth", weights_only=False)
 normalizing_flow.eval()
 
@@ -126,6 +158,7 @@ _, outs_train_all = normalizing_flow.reverse(X_train_confounders)
 _, outs_valid_all = normalizing_flow.reverse(X_valid_confounders)
 _, outs_test_all = normalizing_flow.reverse(X_test_confounders)
 
+### choose the first element of the output list -- corresponds to the base density
 base_train = outs_train_all[0].detach().cpu().numpy()
 base_valid = outs_valid_all[0].detach().cpu().numpy()
 base_test = outs_test_all[0].detach().cpu().numpy()

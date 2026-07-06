@@ -7,6 +7,44 @@ import numpy as np
 
 
 class Encoder(nn.Module):
+    """
+    3D convolutional encoder that maps momenta to a latent vector.
+
+    This encoder applies a sequence of 3D convolutional layers followed by GELU
+    activations. The resulting feature map is flattened and passed through a
+    fully connected layer to obtain a latent representation.
+
+    Parameters
+    ----------
+    latent_dim : int
+        Dimensionality of the latent representation produced by the encoder.
+
+    Attributes
+    ----------
+    conv1 : torch.nn.Conv3d
+        First 3D convolutional layer. Maps the input from 3 channels to 32
+        feature channels using a 1x1x1 kernel.
+
+    conv2 : torch.nn.Conv3d
+        Second 3D convolutional layer. Keeps 32 feature channels and uses a
+        2x2x2 kernel.
+
+    conv3 : torch.nn.Conv3d
+        Third 3D convolutional layer. Maps the feature representation from
+        32 channels to 64 channels using a 1x1x1 kernel.
+
+    conv4 : torch.nn.Conv3d
+        Fourth 3D convolutional layer. Maps the feature representation from
+        64 channels to 128 channels using a 2x2x2 kernel.
+
+    flatten : torch.nn.Flatten
+        Flattens the final convolutional feature map into a one-dimensional
+        feature vector per sample.
+
+    fc_latent : torch.nn.Linear
+        Fully connected layer that maps the flattened feature vector to the
+        latent space.
+    """
     def __init__(self, latent_dim):
         super().__init__()
 
@@ -21,6 +59,26 @@ class Encoder(nn.Module):
 
 
     def forward(self, x):
+        """
+                Forward pass of the encoder.
+
+                Parameters
+                ----------
+                x : torch.Tensor
+                    Input tensor with shape:
+
+                    `(batch_size, 3, D, H, W)`
+
+                    For the current fully connected layer, the expected spatial input
+                    size is approximately `(8, 9, 10)`.
+
+                Returns
+                -------
+                z_latent : torch.Tensor
+                    Latent representation of the input tensor with shape:
+
+                    `(batch_size, latent_dim)`
+                """
 
         x = F.gelu(self.conv1(x))
         x = F.gelu(self.conv2(x))
@@ -35,6 +93,43 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
+    """
+        3D transposed-convolutional decoder that maps a latent vector back to the
+        momenta space.
+
+        This decoder performs the inverse operation of the corresponding encoder.
+        It first maps the latent representation to a high-dimensional feature vector
+        using a fully connected layer. The feature vector is then reshaped into a
+        3D feature map and passed through a sequence of transposed 3D convolutional
+        layers to reconstruct the momenta output.
+
+        Parameters
+        ----------
+        latent_dim : int
+            Dimensionality of the latent representation used as input to the decoder.
+
+        Attributes
+        ----------
+        fc : torch.nn.Linear
+            Fully connected layer that maps the latent vector to a flattened 3D
+            feature representation of size `128 * 6 * 7 * 8`.
+
+        deconv1 : torch.nn.ConvTranspose3d
+            First transposed 3D convolutional layer. Maps the feature representation
+            from 128 channels to 64 channels using a 2x2x2 kernel.
+
+        deconv2 : torch.nn.ConvTranspose3d
+            Second transposed 3D convolutional layer. Maps the feature representation
+            from 64 channels to 32 channels using a 1x1x1 kernel.
+
+        deconv3 : torch.nn.ConvTranspose3d
+            Third transposed 3D convolutional layer. Keeps 32 feature channels and
+            uses a 2x2x2 kernel.
+
+        deconv4 : torch.nn.ConvTranspose3d
+            Final transposed 3D convolutional layer. Maps the feature representation
+            from 32 channels back to 3 output channels.
+        """
     def __init__(self, latent_dim):
         super().__init__()
 
@@ -47,6 +142,25 @@ class Decoder(nn.Module):
 
 
     def forward(self, z):
+        """
+                Forward pass of the decoder.
+
+                Parameters
+                ----------
+                z : torch.Tensor
+                    Latent input tensor with shape:
+
+                    `(batch_size, latent_dim)`
+
+                Returns
+                -------
+                x : torch.Tensor
+                    Reconstructed volumetric tensor with shape:
+
+                    `(batch_size, 3, 8, 9, 10)`
+
+                    for the current architecture.
+                """
 
         x = F.gelu(self.fc(z))
 
@@ -62,6 +176,29 @@ class Decoder(nn.Module):
 
 
 class ConvAE(nn.Module):
+    """
+    3D convolutional autoencoder
+
+    This class combines an encoder and a decoder into a complete autoencoder
+    architecture. The encoder maps the input momenta to a lower-dimensional latent
+    representation, while the decoder reconstructs the original momenta
+    from this latent representation.
+
+    Parameters
+    ----------
+    latent_dim : int
+        Dimensionality of the latent representation produced by the encoder and
+        used as input to the decoder.
+
+    Attributes
+    ----------
+    encoder : Encoder
+        Encoder network that maps the input tensor to a latent vector.
+
+    decoder : Decoder
+        Decoder network that maps the latent vector back to the reconstructed
+        volumetric output
+    """
     def __init__(self, latent_dim):
         super().__init__()
 
@@ -77,6 +214,50 @@ class ConvAE(nn.Module):
 
 
 class TrainerAE:
+    """
+    Trainer class for a convolutional autoencoder.
+
+    This class handles the complete training and validation loop for an
+    autoencoder model. It trains the model using MSE-based reconstruction error
+    loss
+
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Autoencoder model to be trained. The model is expected to take an input
+        tensor and return a reconstructed tensor with the same shape.
+
+    optimizer : torch.optim.Optimizer
+        Optimizer used to update the model parameters.
+
+    epochs : int
+        Number of training epochs.
+
+    train_loader : torch.utils.data.DataLoader
+        DataLoader containing the training data.
+
+    valid_loader : torch.utils.data.DataLoader
+        DataLoader containing the validation data.
+
+    latent_dim : int
+        Dimensionality of the latent representation. This is stored for reference
+        but is not directly used during training.
+
+    Attributes
+    ----------
+    device : torch.device
+        Device used for training. In the current implementation, this is fixed
+        to CUDA.
+
+    TrainTotal_MeanBatch_Epochs : list
+        List storing the mean training loss for each epoch.
+
+    ValidTotal_MeanBatch_Epochs : list
+        List storing the mean validation loss for each epoch.
+
+    latent_dimension : int
+        Stored value of the latent dimensionality.
+    """
     def __init__(self, model, optimizer, epochs, train_loader, valid_loader, latent_dim):
 
         self.device = torch.device('cuda')
@@ -102,6 +283,18 @@ class TrainerAE:
         return loss_recon
 
     def training(self):
+        """
+        Train the autoencoder model.
+
+        This method performs the full training and validation loop. For each
+        epoch
+
+        Returns
+        -------
+        model : torch.nn.Module
+            The trained model loaded with the weights corresponding to the lowest
+            validation loss.
+        """
         pbar = tqdm(total=self.epochs, desc="Epochs training...")
         best_val_loss = float('inf')
         best_model_weights = None
@@ -147,6 +340,7 @@ class TrainerAE:
                 ValidTotal_MeanBatch = np.mean(valid_total_loss)
 
                 self.ValidTotal_MeanBatch_Epochs.append(ValidTotal_MeanBatch)
+
             ### Keep track of the model that results to the minimum validation error
             if ValidTotal_MeanBatch < best_val_loss:
                 best_val_loss = ValidTotal_MeanBatch

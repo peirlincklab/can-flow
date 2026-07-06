@@ -1,6 +1,9 @@
 import numpy as np
 import torch
 
+
+
+### This file encodes real momenta into the latent space using the CAN-FLOW autoencoder, and saves the latent representations
 device = 'cuda'
 
 momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")

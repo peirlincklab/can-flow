@@ -1,52 +1,127 @@
-import numpy as np
 import pandas as pd
-import torch
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, font_manager
-from scipy.stats import wasserstein_distance
 import seaborn as sns
-import os
-from scipy.stats import entropy
+
+### This file is used to generate the results illustrated in Figure 5 of the manuscript
+### We can choose to visualize different clinical phenotypes apart from LVEDV and RVEDV
 
 
+def generate_plot(df, df_str, color_plot, xmin, xmax, ymin, ymax, df_real_overlay=None):
+    """
+        Generate a scatter plot of a clinical phenotype versus another phenotype with marginal KDE distributions.
 
-def kl_div_histogram(x, y):
-    px, bins = np.histogram(x, bins=1500, density=False)
-    py, _ = np.histogram(y, bins=bins, density=False)
+        This function creates a joint-style plot showing the relationship between
+        two clinical phenotypes. The main panel contains the scatter plot, while the top and
+        right panels show the marginal kernel density estimates (KDEs) for the two clinical phenotypes
 
-    px = px.astype(float)
-    py = py.astype(float)
+        Optionally, the marginal KDE distributions of a real dataset can be overlaid
+        in black for comparison with a generated dataset.
 
-    # normalize
-    px /= px.sum()
-    py /= py.sum()
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame containing all clinical phenotypes
 
-    # avoid zeros
-    eps = 1e-12
-    px += eps
-    py += eps
-    px /= px.sum()
-    py /= py.sum()
+        df_str : str
+            Name of the dataset or model being plotted. This string is used when
+            saving the figure.
 
-    kl_xy = entropy(px, py)
+            If `df_str == 'real'`, the y-axis label is shown. Otherwise, only the
+            x-axis label is shown.
 
-    return kl_xy
+        color_plot : str
+            Color used for the scatter points and KDE distributions of `df`.
 
+        xmin : float
+            Minimum value of the x-axis.
 
+        xmax : float
+            Maximum value of the x-axis.
 
+        ymin : float
+            Minimum value of the y-axis.
+
+        ymax : float
+            Maximum value of the y-axis.
+
+        df_real_overlay : pandas.DataFrame, optional
+            Optional real-data DataFrame used to overlay marginal KDE distributions
+            on top of the KDEs of `df`.
+        """
+    fig = plt.figure(figsize=(10.5, 8.5))
+    gs = fig.add_gridspec(2, 2, width_ratios=[4, 1], height_ratios=[1, 4],
+                          wspace=0.02, hspace=0.02)
+
+    ax_scatter = fig.add_subplot(gs[1, 0])
+    ax_histx = fig.add_subplot(gs[0, 0], sharex=ax_scatter)
+    ax_histy = fig.add_subplot(gs[1, 1], sharey=ax_scatter)
+
+    ax_histx2 = ax_histx.twinx()
+    ax_histy2 = ax_histy.twiny()
+
+    ax_scatter.scatter(df['RV_Vol_mL'], df['LV_Vol_mL'], s=150, color=color_plot, alpha=0.8, edgecolors='white', linewidth=0.2)
+
+    if df_str == 'real':
+        ax_scatter.set_ylabel('LV volume [mL]')
+    ax_scatter.set_xlabel('RV volume [mL]')
+
+    ax_scatter.set_xlim([xmin, xmax])
+    ax_scatter.set_ylim([ymin, ymax])
+
+    ax_scatter.set_yticks([100, 150, 200, 250])
+    ax_scatter.set_xticks([100, 150, 200, 250])
+
+    ### Top KDE -> For RV
+    sns.kdeplot(x=df['RV_Vol_mL'], ax=ax_histx, fill=True, color=color_plot)
+
+    ### Right KDE -> For LV
+    sns.kdeplot(y=df['LV_Vol_mL'], ax=ax_histy, fill=True, color=color_plot)
+
+    if df_real_overlay is not None:
+        sns.kdeplot(x=df_real_overlay['RV_Vol_mL'], ax=ax_histx, fill=True, color='black', alpha=0.2)
+        sns.kdeplot(y=df_real_overlay['LV_Vol_mL'], ax=ax_histy, fill=True, color='black', alpha=0.2)
+
+    ax_histx.tick_params(axis='x', labelbottom=False)
+    ax_histx.tick_params(axis='y', left=False)
+    ax_histx.set_xlabel('')  # remove xlabel
+    ax_histx.set_ylabel('')  # remove ylabel
+    ax_histx.set_yticks([])
+
+    ax_histy.tick_params(axis='y', labelleft=False)
+    ax_histy.tick_params(axis='x', bottom=False)
+    ax_histy.set_xlabel('')
+    ax_histy.set_ylabel('')
+    ax_histy.set_xticks([])
+
+    ax_histx2.set_yticks([])
+    ax_histx2.set_ylabel('')
+    ax_histx2.spines['right'].set_visible(False)
+    ax_histx2.spines['top'].set_visible(False)
+
+    ax_histy2.set_xticks([])
+    ax_histy2.set_xlabel('')
+    ax_histy2.spines['top'].set_visible(False)
+    ax_histy2.spines['right'].set_visible(False)
+
+    for ax in [ax_histx, ax_histy, ax_histx2, ax_histy2]:
+        for spine in ['top', 'right', 'left', 'bottom']:
+            ax.spines[spine].set_visible(False)
+
+    plt.savefig(f'../figures_experiments/compare_clinical_metrics/{df_str}_scatter.svg')
 
 params = {
-            'axes.labelsize': 10,
-            'font.size': 10,
-            'legend.fontsize': 10,
-            'xtick.labelsize': 10,
-            'ytick.labelsize': 10,
+            'axes.labelsize': 35,
+            'font.size': 35,
+            'legend.fontsize': 35,
+            'xtick.labelsize': 35,
+            'ytick.labelsize': 35,
             'text.usetex': False,
-            'axes.linewidth': 1.5,
-            'xtick.major.width': 1.5,
-            'ytick.major.width': 1.5,
-            'xtick.major.size': 1.5,
-            'ytick.major.size': 1.5
+            'axes.linewidth': 2,
+            'xtick.major.width': 2,
+            'ytick.major.width': 2,
+            'xtick.major.size': 2,
+            'ytick.major.size': 2
         }
 
 
@@ -55,312 +130,39 @@ font_path = r'C:\Users\kkevopoulos\AppData\Local\Microsoft\Windows\Fonts\SourceS
 font_prop = font_manager.FontProperties(fname=font_path)
 rcParams['font.family'] = font_prop.get_name()
 
-
-
-decoder = torch.load("../data_models_saved/models/ae_decoder.pth", weights_only=False, map_location=torch.device('cpu'))
-
-
 frac_train = 0.7
 NumAll = 2208
 
 NumTrainSamples = int(NumAll * frac_train)
 
-
+### we visualize results only for CAN-FLOW and the two most performant cVAEs
 df_real = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
 
 df_nf = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_nf_clinical.pkl')
 df_vae2 = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_vae2_clinical.pkl')
 df_vae3 = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_vae3_clinical.pkl')
 
-### Compute the WD and KL divergence for clinical metrics, for all models
+xmin = min([df_real['RV_Vol_mL'].min(), df_nf['RV_Vol_mL'].min(), df_vae2['RV_Vol_mL'].min(), df_vae3['RV_Vol_mL'].min()]) - 10
+xmax = max([df_real['RV_Vol_mL'].max(), df_nf['RV_Vol_mL'].max(), df_vae2['RV_Vol_mL'].max(), df_vae3['RV_Vol_mL'].max()]) + 10
 
+ymin = min([df_real['LV_Vol_mL'].min(), df_nf['LV_Vol_mL'].min(), df_vae2['LV_Vol_mL'].min(), df_vae3['LV_Vol_mL'].min()]) - 10
+ymax = max([df_real['LV_Vol_mL'].max(), df_nf['LV_Vol_mL'].max(), df_vae2['LV_Vol_mL'].max(), df_vae3['LV_Vol_mL'].max()]) + 10
 
+models = ['real', 'can_flow', 'cvae2', 'cvae3']
+dfs = [df_real, df_nf, df_vae2, df_vae3]
+colors = ['black', '#D55E00', '#0072B2', '#56B4E9']
 
+for i, mod in enumerate(models):
 
-#### Figure 1: x-axis RV_Vol, y-axis LV_Vol
-rv_vol_real = df_real['RV_Vol_mL']
-lv_vol_real = df_real['LV_Vol_mL']
+    if i ==0:
+        df_real_overlay = None
+    else:
+        df_real_overlay = df_real
 
-rv_vol_nf = df_nf['RV_Vol_mL']
-lv_vol_nf= df_nf['LV_Vol_mL']
-
-rv_vol_vae2 = df_vae2['RV_Vol_mL']
-lv_vol_vae2 = df_vae2['LV_Vol_mL']
-
-rv_vol_vae3 = df_vae3['RV_Vol_mL']
-lv_vol_vae3 = df_vae3['LV_Vol_mL']
-
-
-fig = plt.figure(figsize=(7, 5))
-gs = fig.add_gridspec(2, 2, width_ratios=[4,1], height_ratios=[1,4],
-                      wspace=0.05, hspace=0.05)
-
-ax_scatter = fig.add_subplot(gs[1,0])
-ax_histx   = fig.add_subplot(gs[0,0], sharex=ax_scatter)
-ax_histy   = fig.add_subplot(gs[1,1], sharey=ax_scatter)
-
-ax_histx2 = ax_histx.twinx()
-ax_histy2 = ax_histy.twiny()
-
-ax_scatter.scatter(rv_vol_real, lv_vol_real, s=20, color='black', edgecolor='white',linewidth=0.3,label='real')
-ax_scatter.scatter(rv_vol_nf, lv_vol_nf, s=20, color="#56B4E9", edgecolor='white', linewidth=0.3,label='CAN-DO')
-ax_scatter.scatter(rv_vol_vae2, lv_vol_vae2, s=20, color='orange', edgecolor='white', linewidth=0.3,label=r'cVAE $\beta=10^{-2}$')
-ax_scatter.scatter(rv_vol_vae3, lv_vol_vae3, s=20, color="#CC79A7", edgecolor='white', linewidth=0.3, label=r'cVAE $\beta=10^{-3}$')
-
-
-ax_scatter.set_xlabel('RV volume [mL]')
-ax_scatter.set_ylabel('LV volume [mL]')
-ax_scatter.legend(loc="lower right", fontsize=10)
-
-### Top KDE -> For RV
-sns.kdeplot(x=rv_vol_real, ax=ax_histx, fill=True, color='black')
-sns.kdeplot(x=rv_vol_nf, ax=ax_histx, fill=True, color="#56B4E9")
-sns.kdeplot(x=rv_vol_vae2, ax=ax_histx, fill=True, color='orange')
-sns.kdeplot(x=rv_vol_vae3, ax=ax_histx2, fill=True, color="#CC79A7")
-
-### Right KDE -> For LV
-sns.kdeplot(y=lv_vol_real, ax=ax_histy, fill=True, color='black')
-sns.kdeplot(y=lv_vol_nf, ax=ax_histy, fill=True, color="#56B4E9")
-sns.kdeplot(y=lv_vol_vae2, ax=ax_histy, fill=True, color='orange')
-sns.kdeplot(y=lv_vol_vae3, ax=ax_histy2, fill=True, color="#CC79A7")
-
-# --- Hide tick labels and axis labels for KDE plots ---
-ax_histx.tick_params(axis='x', labelbottom=False)
-ax_histx.tick_params(axis='y', left=False)
-ax_histx.set_xlabel('')  # remove xlabel
-ax_histx.set_ylabel('')  # remove ylabel
-ax_histx.set_yticks([])
-
-ax_histy.tick_params(axis='y', labelleft=False)
-ax_histy.tick_params(axis='x', bottom=False)
-ax_histy.set_xlabel('')
-ax_histy.set_ylabel('')
-ax_histy.set_xticks([])
-
-ax_histx2.set_yticks([])
-ax_histx2.set_ylabel('')
-ax_histx2.spines['right'].set_visible(False)
-ax_histx2.spines['top'].set_visible(False)
-
-ax_histy2.set_xticks([])
-ax_histy2.set_xlabel('')
-ax_histy2.spines['top'].set_visible(False)
-ax_histy2.spines['right'].set_visible(False)
-
-# --- Remove spines for marginal plots ---
-for ax in [ax_histx, ax_histy, ax_histx2, ax_histy2]:
-    for spine in ['top', 'right', 'left', 'bottom']:
-        ax.spines[spine].set_visible(False)
-
-
-# Define the folder path
-folder_save = "../figures_experiments"
-
-# Create the folder
-os.makedirs(folder_save + "/compare_clinical_metrics", exist_ok=True)
-plt.savefig(folder_save + "/compare_clinical_metrics" + "/rv_lv_scatter.svg")
+    generate_plot(df=dfs[i], df_str=mod, color_plot=colors[i],
+                  xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, df_real_overlay=df_real_overlay)
 
 
 
 
 
-
-### Figure 2: 1d distributions of myocardial mass, LVEDV, RVEDV
-# myo_mass_real = df_real['Myo_Mass_g']
-# myo_mass_nf = df_nf['Myo_Mass_g']
-# myo_mass_vae2 = df_vae2['Myo_Mass_g']
-# myo_mass_vae3 = df_vae3['Myo_Mass_g']
-#
-#
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-#
-# sns.kdeplot(myo_mass_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real', bw_adjust=1.0)
-# sns.kdeplot(myo_mass_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF', bw_adjust=1.0)
-# sns.kdeplot(myo_mass_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$', bw_adjust=1.0)
-# sns.kdeplot(myo_mass_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$', bw_adjust=1.0)
-# lines1, labels1 = ax1.get_legend_handles_labels()
-# lines2, labels2 = ax2.get_legend_handles_labels()
-# ax1.legend(lines1 + lines2, labels1 + labels2)
-# ax1.set_xlabel('myocardial mass [g]')
-# ax1.set_ylabel('density')
-# ax2.set_ylabel('density', color='tab:red')
-# ax2.tick_params(axis='y', colors='tab:red')
-# ax2.spines['right'].set_visible(False)
-# # plt.savefig(folder_save + "/compare_clinical_metrics" + "/myocardial_mass.pdf")
-# plt.show()
-#
-#
-#
-#
-#
-# ### Figure 3: 1d distributions of LVEDV, RVEDV
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-#
-# sns.kdeplot(rv_vol_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real')
-# sns.kdeplot(rv_vol_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF')
-# sns.kdeplot(rv_vol_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$')
-# sns.kdeplot(rv_vol_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$')
-# lines1, labels1 = ax1.get_legend_handles_labels()
-# lines2, labels2 = ax2.get_legend_handles_labels()
-# ax1.legend(lines1 + lines2, labels1 + labels2)
-# ax1.set_xlabel('RV volume [mL]')
-# ax1.set_ylabel('density')
-# ax2.set_ylabel('density', color='tab:red')
-# ax2.tick_params(axis='y', colors='tab:red')
-# ax2.spines['right'].set_visible(False)
-# # plt.savefig(folder_save + "/compare_clinical_metrics" + "/rvedv.pdf")
-# plt.show()
-#
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-#
-# sns.kdeplot(lv_vol_real, ax=ax1, color='tab:grey', fill=True, alpha=0.3, label='real')
-# sns.kdeplot(lv_vol_nf, ax=ax1, color='aqua', fill=True, alpha=0.3, label='NF')
-# sns.kdeplot(lv_vol_vae2, ax=ax1, color='tab:orange', fill=True, alpha=0.3, label=r'$\beta=10^{-2}$')
-# sns.kdeplot(lv_vol_vae3, ax=ax2, color='tab:red', fill=True, alpha=0.3, label=r'$\beta=10^{-3}$')
-# lines1, labels1 = ax1.get_legend_handles_labels()
-# lines2, labels2 = ax2.get_legend_handles_labels()
-# ax1.legend(lines1 + lines2, labels1 + labels2)
-# ax1.set_xlabel('LV volume [mL]')
-# ax1.set_ylabel('density')
-# ax2.set_ylabel('density', color='tab:red')
-# ax2.tick_params(axis='y', colors='tab:red')
-# ax2.spines['right'].set_visible(False)
-# # plt.savefig(folder_save + "/compare_clinical_metrics" + "/lvedv.pdf")
-# # plt.close()
-# plt.show()
-
-
-
-
-
-
-# ### Table result -- print wasserstein distance and KL divergence for Myo_Mass, LVEDV, RVEDV for all models
-# ### Figure 4 --- bar chart of WD for different models and different biomarkers
-# biomarkers = ['RV_Vol_mL', 'LV_Vol_mL', 'Myo_Mass_g']
-#
-# def add_labels(bars):
-#     for bar in bars:
-#         height = bar.get_height()
-#         plt.text(
-#             bar.get_x() + bar.get_width() / 2,
-#             height,
-#             f'{height:.2f}',
-#             ha='center',
-#             va='bottom',
-#             fontsize=14
-#         )
-#
-# biomarkers_diffs = []
-# for biom in biomarkers:
-#     x = df_real[biom]
-#
-#     y_nf = df_nf[biom]
-#     y_vae = df_vae[biom]
-#     y_gan = df_gan[biom]
-#
-#     wass_nf = wasserstein_distance(x, y_nf)
-#     wass_vae = wasserstein_distance(x, y_vae)
-#     wass_gan = wasserstein_distance(x, y_gan)
-#
-#
-#     kl_nf = kl_div_histogram(x=x, y=y_nf)
-#     kl_vae = kl_div_histogram(x=x, y=y_vae)
-#     kl_gan = kl_div_histogram(x=x, y=y_gan)
-#
-#     biomarkers_diffs.append([wass_nf, wass_vae, wass_gan, kl_nf, kl_vae, kl_gan])
-#
-#     print(f"{biom}  \n"
-#           f"NF_Wass: {wass_nf},  NF_KL: {kl_nf}\n"
-#           f"VAE_Wass: {wass_vae}, VAE_KL: {kl_vae}\n"
-#           f"GAN_Wass: {wass_gan}, GAN_KL: {kl_gan}")
-#
-#
-#     categories = ['CaN_Do', 'VAE', 'GAN']
-#
-#     wass = [wass_nf, wass_vae, wass_gan]
-#     kl = [kl_nf, kl_vae, kl_gan]
-#
-#     x = np.arange(len(categories))  # positions of main categories
-#     width = 0.25  # width of each bar
-#
-#     plt.figure()
-#     fig_wass = plt.bar(x - width, wass, width, color='tab:blue', label='Wasserstein distance')
-#     fig_kl = plt.bar(x, kl, width, color='tab:red', label='KL divergence')
-#
-#     plt.xticks(x, categories)
-#     plt.xlabel('')
-#     plt.ylabel('')
-#     plt.legend()
-#
-#     add_labels(fig_wass)
-#     add_labels(fig_kl)
-#
-#     plt.tight_layout()
-#     plt.savefig(f'../figures_experiments/compare_clinical_metrics/bar_{biom}.pdf')
-#
-#
-#
-#
-#
-#
-# ### Figure 5 --- "radar" charts of WD and KL for different models
-# categories = ['LVEDV', 'RVEDV', 'myocardial mass']
-#
-# nf_wd = [biomarkers_diffs[i][0] for i in range(len(categories))]
-# vae_wd = [biomarkers_diffs[i][1] for i in range(len(categories))]
-# gan_wd = [biomarkers_diffs[i][2] for i in range(len(categories))]
-#
-# nf_kl = [biomarkers_diffs[i][3] for i in range(len(categories))]
-# vae_kl = [biomarkers_diffs[i][4] for i in range(len(categories))]
-# gan_kl = [biomarkers_diffs[i][5] for i in range(len(categories))]
-#
-#
-# # Close the loop
-# nf_wd += nf_wd[:1]
-# vae_wd += vae_wd[:1]
-# gan_wd += gan_wd[:1]
-# nf_kl += nf_kl[:1]
-# vae_kl += vae_kl[:1]
-# gan_kl += gan_kl[:1]
-#
-#
-# angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
-# angles += angles[:1]  # match data length
-#
-# fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-#
-# # Plot each dataset
-# ax.plot(angles, nf_wd, linewidth=2, linestyle='solid', color='aqua', label='NF')
-# ax.fill(angles, nf_wd, color='aqua', alpha=0.1)
-#
-# ax.plot(angles, vae_wd, linewidth=2, linestyle='solid', color='tab:orange', label='VAE')
-# ax.fill(angles, vae_wd, color='tab:orange', alpha=0.1)
-#
-# ax.plot(angles, gan_wd, linewidth=2, linestyle='solid', color='tab:red', label='GAN')
-# ax.fill(angles, gan_wd, color='tab:red', alpha=0.1)
-# ax.set_xticks(np.linspace(0, 2*np.pi, len(categories), endpoint=False))
-# ax.set_xticklabels(categories)
-# ax.tick_params(axis='x', pad=15)
-# plt.savefig('../figures_experiments/compare_clinical_metrics/wd_radar.pdf')
-#
-#
-#
-# fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-#
-# # Plot each dataset
-# ax.plot(angles, nf_kl, linewidth=2, linestyle='solid', color='aqua', label='NF')
-# ax.fill(angles, nf_kl, color='aqua', alpha=0.1)
-#
-# ax.plot(angles, vae_kl, linewidth=2, linestyle='solid', color='tab:orange', label='VAE')
-# ax.fill(angles, vae_kl, color='tab:orange', alpha=0.1)
-#
-# ax.plot(angles, gan_kl, linewidth=2, linestyle='solid', color='tab:red', label='GAN')
-# ax.fill(angles, gan_kl, color='tab:red', alpha=0.1)
-#
-# ax.set_xticks(np.linspace(0, 2*np.pi, len(categories), endpoint=False))
-# ax.set_xticklabels(categories)
-# ax.tick_params(axis='x', pad=15)
-# plt.savefig('../figures_experiments/compare_clinical_metrics/kl_radar.pdf')

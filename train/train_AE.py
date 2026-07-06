@@ -12,11 +12,11 @@ class Data(data.Dataset):
         self.X = torch.tensor(X, dtype=torch.float32)
 
     def __len__(self):
-        # Number of data points we have.
+        ### Number of data points we have.
         return self.X.shape[0]
 
     def __getitem__(self, idx):
-        # Return the idx-th data point of the dataset
+        ### Return the idx-th data point of the dataset
         data_point_x = self.X[idx]
 
         return data_point_x
@@ -44,7 +44,7 @@ batch_size_frac = 0.20
 
 frac_train = 0.7
 frac_valid = 0.15
-epochs = 4000
+epochs = 2000
 lrate = 2e-4
 
 latent_dimension = 44

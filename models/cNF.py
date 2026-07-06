@@ -7,14 +7,48 @@ from tqdm import tqdm
 
 
 class ActNorm(nn.Module):
-    def __init__(self, num_features, device, init=True):
-        """
-        ActNorm layer for an MLP-based normalizing flow.
+    """
+    Activation normalization layer.
 
-        Args:
-            num_features (int): Number of features in the input.
-            init (bool): Whether to initialize using the first batch.
-        """
+    This layer applies an affine transformation independently to each feature:
+
+        y = s * x + b
+
+    where `s` and `b` are learnable scale and bias parameters.
+
+    ActNorm initializes its scale
+    and bias parameters using the statistics of the first batch only. After this
+    data-dependent initialization, the parameters are treated as ordinary
+    learnable parameters.
+
+    Parameters
+    ----------
+    num_features : int
+        Number of input features. For an input tensor of shape
+        `(batch_size, num_features)`, this corresponds to the second dimension.
+
+    device : torch.device or str
+        Device on which the learnable parameters are initialized.
+
+    init : bool, optional
+        If True, the layer performs data-dependent initialization using the
+        first batch passed through the forward method. If False, the layer is
+        considered already initialized and starts with `s = 1` and `b = 0`.
+        Default is True.
+
+    Attributes
+    ----------
+    s : nn.Parameter
+        Learnable scale parameter of shape `(1, num_features)`.
+
+    b : nn.Parameter
+        Learnable bias parameter of shape `(1, num_features)`.
+
+    initialized : bool
+        Indicates whether the data-dependent initialization has already been
+        performed.
+    """
+    def __init__(self, num_features, device, init=True):
         super().__init__()
         self.num_features = num_features
         self.initialized = not init
@@ -32,10 +66,10 @@ class ActNorm(nn.Module):
                 mean = x.mean(dim=0, keepdim=True)
                 std = x.std(dim=0, keepdim=True)
 
-                # Initialize parameters
+                ### initialize parameters
                 self.b.data.copy_(-mean)
                 self.s.data.copy_(1 / (std+ 1e-8))
-                self.initialized = True  # Mark as initialized
+                self.initialized = True  ### now mark as initialized
 
 
         y = self.s * x + self.b
@@ -54,12 +88,24 @@ class ActNorm(nn.Module):
 
 
 class InvertibleLinearTransform(nn.Module):
+    """
+    Invertible linear transformation layer parameterized through LU decomposition.
+
+    This layer applies an invertible linear transformation of the form
+
+        y = x W^T
+
+    where W is a square, learnable, invertible weight matrix. Instead of learning W
+    directly, the matrix is parameterized using an LU decomposition:
+
+        W = P L U
+
+    where:
+        - P is a fixed permutation matrix,
+        - L is a lower-triangular matrix with unit diagonal,
+        - U is an upper-triangular matrix with learnable diagonal entries.
+    """
     def __init__(self, dim, device):
-        """
-        Invertible linear transform layer
-        :param dim: input dimension
-        :param device: device
-        """
         super().__init__()
 
         self.device = device
@@ -108,13 +154,14 @@ class InvertibleLinearTransform(nn.Module):
 
 
 class AffineInjector(nn.Module):
+    """
+    Conditional affine injection layer.
+
+    This layer applies an affine transformation to the input `x`, where the
+    scale and translation parameters are predicted from an the metadata conditioning
+    vector `x_conf`.
+    """
     def __init__(self, out_dim, activation):
-        """
-        Affine injector layer
-        It is used to further inform the normalizing flow on the metadata conditioning
-        :param out_dim: output dimension
-        :param activation: activation function to be used in the s, t networks
-        """
         super().__init__()
 
         self.aff_inj_s = nn.Sequential(
@@ -138,6 +185,7 @@ class AffineInjector(nn.Module):
                 nn.init.constant_(m.weight, 0)
                 nn.init.constant_(m.bias, 0)
 
+        ### initialize weights of scale and translation as zero
         self.aff_inj_s.apply(init_weights_zero)
         self.aff_inj_t.apply(init_weights_zero)
 
@@ -169,13 +217,25 @@ class AffineInjector(nn.Module):
 class AffineCoupling(nn.Module):
     def __init__(self, in_dim, out_dim, h_x_conf_dim, device, activation):
         """
-        Affine coupling layer
-        :param in_dim: input dimension
-        :param out_dim: output dimension
-        :param h_x_conf_dim: dimension of metadata embedding
-        :param device: device
-        :param activation: activation function
-        """
+                Initialize the conditional affine coupling layer.
+
+                Parameters
+                ----------
+                in_dim : int
+                    Dimension of the input vector `x`.
+
+                out_dim : int
+                    Hidden dimension used inside the scale and translation networks.
+
+                h_x_conf_dim : int
+                    Dimension of the higher-dim embedding of metadata `h_x_conf`.
+
+                device : torch.device or str
+                    Device on which the networks are stored.
+
+                activation : nn.Module
+                    Activation function used between linear layers
+                """
         super().__init__()
 
         self.coupling_s = nn.Sequential(
@@ -248,7 +308,7 @@ class Block(nn.Module):
         Implements a single block of the normalizing flow architecture, with the several above layers
         :param in_dim: input dimension
         :param out_dim: output dimension
-        :param h_x_conf_dim: dimension of metadata embedding
+        :param h_x_conf_dim: dimension of metadata high-dimensional embedding (g(c))
         :param activation: activation function
         :param device: device
         """
@@ -291,7 +351,7 @@ class FlowHeart(nn.Module):
         :param out_dim: output dimension
         :param n_flow: number of blocks
         :param in_dim_conf: input dimension of metadata conditioning
-        :param out_dim_conf: output dimension of metadata embedding
+        :param out_dim_conf: output dimension of metadata embedding (g(c) - higher dimensional embedding)
         :param device: device
         :param activations: activation functions
         """
@@ -348,9 +408,9 @@ class FlowHeart(nn.Module):
             x, det = flow(x, h_x_conf, x_conf)
             logdet += det
 
-        # compute prior.log_prob(x) -> per-sample vector
+        ### compute prior.log_prob(x) -> per-sample vector
         log_p = prior.log_prob(x)
-        p_total = log_p + logdet  # per-sample --> This is not mean yet
+        p_total = log_p + logdet  ### per-sample
 
         if not compute_likelihoods:
             return x, log_p, logdet
@@ -489,7 +549,7 @@ class TrainerNF:
                 self.Validlog_p_MeanBatch_Epochs.append(Validlogp_MeanBatch)
                 self.Validlogdet_MeanBatch_Epochs.append(Validlogdet_MeanBatch)
 
-            ## Keep track of the model that results to the minimum validation error
+            ### Keep track of the model that results to the minimum validation error
             if ValidTotal_MeanBatch < best_val_loss:
                 best_val_loss = ValidTotal_MeanBatch
                 best_model_weights = self.model.state_dict()
@@ -512,8 +572,6 @@ class TrainerNF:
 
     def plot_losses(self):
 
-        #
-        # Plot the losses
         plt.figure()
         plt.loglog(self.TrainTotal_MeanBatch_Epochs,color='blue', label='Total Training')
         plt.loglog(self.ValidTotal_MeanBatch_Epochs, color='orange', label='Total Validation')
