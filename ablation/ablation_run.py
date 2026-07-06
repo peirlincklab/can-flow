@@ -46,6 +46,17 @@ x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0
 x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
 x_confounders = x_confounders.to_numpy()
 
+### Delete outliers and participants that withdrew from the study
+x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+
+outliers = np.load('utils/outliers_indices.npy')
+mask = np.ones(x_confounders.shape[0], dtype=bool)
+mask[outliers] = False
+
+x_confounders = x_confounders[mask]
+
+
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
