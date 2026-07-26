@@ -176,8 +176,8 @@ for i, decoder in enumerate(cvae_decoders):
     eranks_std.append(erank_cvae_std)
     print(f'ERank cVAE beta= 10^-{i+1} : {erank_cvae_mean} +- {erank_cvae_std}')
 
-# np.save('../data_models_saved/data/eranks_all_mean.npy', np.array(eranks_mean))
-# np.save('../data_models_saved/data/eranks_all_std.npy', np.array(eranks_std))
+# np.save('../models_saved/data/eranks_all_mean.npy', np.array(eranks_mean))
+# np.save('../models_saved/data/eranks_all_std.npy', np.array(eranks_std))
 
 
 

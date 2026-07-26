@@ -60,27 +60,27 @@ def generate_plot(df, df_str, color_plot, xmin, xmax, ymin, ymax, df_real_overla
     ax_histx2 = ax_histx.twinx()
     ax_histy2 = ax_histy.twiny()
 
-    ax_scatter.scatter(df['RV_Vol_mL'], df['LV_Vol_mL'], s=150, color=color_plot, alpha=0.8, edgecolors='white', linewidth=0.2)
+    ax_scatter.scatter(df['Myo_Mass_g'], df['RV_Vol_mL'], s=150, color=color_plot, alpha=0.8, edgecolors='white', linewidth=0.2)
 
     if df_str == 'real':
-        ax_scatter.set_ylabel('LV volume [mL]')
-    ax_scatter.set_xlabel('RV volume [mL]')
+        ax_scatter.set_ylabel('RV volume [mL]')
+    ax_scatter.set_xlabel('myocardial mass [g]')
 
     ax_scatter.set_xlim([xmin, xmax])
     ax_scatter.set_ylim([ymin, ymax])
 
     ax_scatter.set_yticks([100, 150, 200, 250])
-    ax_scatter.set_xticks([100, 150, 200, 250])
+    ax_scatter.set_xticks([80, 120, 160, 200, 240])
 
     ### Top KDE -> For RV
-    sns.kdeplot(x=df['RV_Vol_mL'], ax=ax_histx, fill=True, color=color_plot)
+    sns.kdeplot(x=df['Myo_Mass_g'], ax=ax_histx, fill=True, color=color_plot)
 
     ### Right KDE -> For LV
-    sns.kdeplot(y=df['LV_Vol_mL'], ax=ax_histy, fill=True, color=color_plot)
+    sns.kdeplot(y=df['RV_Vol_mL'], ax=ax_histy, fill=True, color=color_plot)
 
     if df_real_overlay is not None:
-        sns.kdeplot(x=df_real_overlay['RV_Vol_mL'], ax=ax_histx, fill=True, color='black', alpha=0.2)
-        sns.kdeplot(y=df_real_overlay['LV_Vol_mL'], ax=ax_histy, fill=True, color='black', alpha=0.2)
+        sns.kdeplot(x=df_real_overlay['Myo_Mass_g'], ax=ax_histx, fill=True, color='black', alpha=0.2)
+        sns.kdeplot(y=df_real_overlay['RV_Vol_mL'], ax=ax_histy, fill=True, color='black', alpha=0.2)
 
     ax_histx.tick_params(axis='x', labelbottom=False)
     ax_histx.tick_params(axis='y', left=False)
@@ -108,7 +108,7 @@ def generate_plot(df, df_str, color_plot, xmin, xmax, ymin, ymax, df_real_overla
         for spine in ['top', 'right', 'left', 'bottom']:
             ax.spines[spine].set_visible(False)
 
-    plt.savefig(f'../figures_experiments/compare_clinical_metrics/{df_str}_scatter.svg')
+    plt.savefig(f'../figures_experiments/compare_clinical_metrics/{df_str}_scatter.svg', bbox_inches="tight")
 
 params = {
             'axes.labelsize': 35,
@@ -142,11 +142,11 @@ df_nf = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_nf
 df_vae2 = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_vae2_clinical.pkl')
 df_vae3 = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_vae3_clinical.pkl')
 
-xmin = min([df_real['RV_Vol_mL'].min(), df_nf['RV_Vol_mL'].min(), df_vae2['RV_Vol_mL'].min(), df_vae3['RV_Vol_mL'].min()]) - 10
-xmax = max([df_real['RV_Vol_mL'].max(), df_nf['RV_Vol_mL'].max(), df_vae2['RV_Vol_mL'].max(), df_vae3['RV_Vol_mL'].max()]) + 10
+xmin = min([df_real['Myo_Mass_g'].min(), df_nf['Myo_Mass_g'].min(), df_vae2['Myo_Mass_g'].min(), df_vae3['Myo_Mass_g'].min()]) - 10
+xmax = max([df_real['Myo_Mass_g'].max(), df_nf['Myo_Mass_g'].max(), df_vae2['Myo_Mass_g'].max(), df_vae3['Myo_Mass_g'].max()]) + 10
 
-ymin = min([df_real['LV_Vol_mL'].min(), df_nf['LV_Vol_mL'].min(), df_vae2['LV_Vol_mL'].min(), df_vae3['LV_Vol_mL'].min()]) - 10
-ymax = max([df_real['LV_Vol_mL'].max(), df_nf['LV_Vol_mL'].max(), df_vae2['LV_Vol_mL'].max(), df_vae3['LV_Vol_mL'].max()]) + 10
+ymin = min([df_real['RV_Vol_mL'].min(), df_nf['RV_Vol_mL'].min(), df_vae2['RV_Vol_mL'].min(), df_vae3['RV_Vol_mL'].min()]) - 10
+ymax = max([df_real['RV_Vol_mL'].max(), df_nf['RV_Vol_mL'].max(), df_vae2['RV_Vol_mL'].max(), df_vae3['RV_Vol_mL'].max()]) + 10
 
 models = ['real', 'can_flow', 'cvae2', 'cvae3']
 dfs = [df_real, df_nf, df_vae2, df_vae3]

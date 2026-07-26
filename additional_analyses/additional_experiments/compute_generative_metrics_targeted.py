@@ -84,5 +84,5 @@ for i in range(num_runs_stoch):
     mmd_vals_all.append(mmd_vals)
     cov_vals_all.append(cov_vals)
 
-np.save("data_models_saved/data/mmd_vals_targeted.npy", np.array(mmd_vals_all))
-np.save("data_models_saved/data/cov_vals_targeted.npy", np.array(cov_vals_all))
+np.save("models_saved/data/mmd_vals_targeted.npy", np.array(mmd_vals_all))
+np.save("models_saved/data/cov_vals_targeted.npy", np.array(cov_vals_all))

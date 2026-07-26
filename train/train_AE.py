@@ -49,7 +49,7 @@ lrate = 2e-4
 
 latent_dimension = 44
 
-momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
@@ -96,7 +96,7 @@ trainer = TrainerAE(model=Convol_ae, optimizer=optimizer, epochs=epochs,
 Convol_ae = trainer.training()
 trainer.plot_losses()
 
-torch.save(Convol_ae, "data_models_saved/models/ae_model.pth")
-torch.save(Convol_ae.encoder, "data_models_saved/models/ae_encoder.pth")
-torch.save(Convol_ae.decoder, "data_models_saved/models/ae_decoder.pth")
+torch.save(Convol_ae, f"ablation/ablation_latent_dimensionality/models_saved/ae_model_latent_{latent_dimension}.pth")
+torch.save(Convol_ae.encoder, f"ablation/ablation_latent_dimensionality/models_saved/models/ae_encoder_latent_{latent_dimension}.pth")
+torch.save(Convol_ae.decoder, f"ablation/ablation_latent_dimensionality/models_saved/models/ae_decoder_latent_{latent_dimension}.pth")
 

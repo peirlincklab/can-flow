@@ -23,7 +23,8 @@ def write_cp_momenta(base_folder, array_towrite, type):
 def save_momenta(type_momenta, momenta_tosave):
     cp = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__ControlPoints.txt")
 
-    documents_path = '../data_models_saved/data/momenta2shape'
+    # documents_path = '../models_saved/data/momenta2shape'
+    documents_path = r'C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies'
     base_folder = os.path.join(documents_path, f"{type_momenta}_Momenta")
 
     pbar = tqdm(total=momenta_tosave.shape[0], desc="Creating folders and files...")

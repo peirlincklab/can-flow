@@ -57,7 +57,7 @@ beta = 1e-6
 
 latent_dimension = 44
 
-momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
@@ -120,6 +120,6 @@ trainer = Trainer_cVAE(model=cvae, optimizer=optimizer, epochs=epochs, train_loa
 cvae_trained = trainer.training()
 trainer.plot_losses()
 
-torch.save(cvae_trained, f"data_models_saved/models/cvae_model_beta_{beta}.pth")
-torch.save(cvae_trained.encoder, f"data_models_saved/models/cvae_encoder_beta_{beta}.pth")
-torch.save(cvae_trained.decoder, f"data_models_saved/models/cvae_decoder_beta_{beta}.pth")
+torch.save(cvae_trained, f"ablation/ablation_latent_dimensionality/models_saved/cvae_model_beta_{beta}_latent_{latent_dimension}.pth")
+torch.save(cvae_trained.encoder, f"ablation/ablation_latent_dimensionality/models_saved/cvae_encoder_beta_{beta}_latent_{latent_dimension}.pth")
+torch.save(cvae_trained.decoder, f"ablation/ablation_latent_dimensionality/models_saved/cvae_decoder_beta_{beta}_latent_{latent_dimension}.pth")

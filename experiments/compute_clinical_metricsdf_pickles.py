@@ -120,13 +120,13 @@ df_vae6 = dfs_generated[6]
 os.makedirs("../data_models_saved/data/dataframes_clinical_info", exist_ok=True)
 
 ### for targeted subgroup
-# df_real.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_real_clinical_targeted.pkl")
+# df_real.to_pickle("../models_saved/data/dataframes_clinical_info/df_real_clinical_targeted.pkl")
 
-df_real.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl")
-df_nf.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_nf_clinical.pkl")
-df_vae1.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_vae1_clinical.pkl")
-df_vae2.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_vae2_clinical.pkl")
-df_vae3.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_vae3_clinical.pkl")
-df_vae4.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_vae4_clinical.pkl")
-df_vae5.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_vae5_clinical.pkl")
-df_vae6.to_pickle("../data_models_saved/data/dataframes_clinical_info/df_vae6_clinical.pkl")
+df_real.to_pickle("../models_saved/data/dataframes_clinical_info/df_real_clinical.pkl")
+df_nf.to_pickle("../models_saved/data/dataframes_clinical_info/df_nf_clinical.pkl")
+df_vae1.to_pickle("../models_saved/data/dataframes_clinical_info/df_vae1_clinical.pkl")
+df_vae2.to_pickle("../models_saved/data/dataframes_clinical_info/df_vae2_clinical.pkl")
+df_vae3.to_pickle("../models_saved/data/dataframes_clinical_info/df_vae3_clinical.pkl")
+df_vae4.to_pickle("../models_saved/data/dataframes_clinical_info/df_vae4_clinical.pkl")
+df_vae5.to_pickle("../models_saved/data/dataframes_clinical_info/df_vae5_clinical.pkl")
+df_vae6.to_pickle("../models_saved/data/dataframes_clinical_info/df_vae6_clinical.pkl")

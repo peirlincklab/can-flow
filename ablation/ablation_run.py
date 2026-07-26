@@ -66,13 +66,13 @@ frac_valid = 0.15
 epochs = 1200
 lrate = 2.5e-4
 
-X_train_z = np.load("data_models_saved/data/X_train_z.npy")
+X_train_z = np.load("models_saved/data/X_train_z.npy")
 X_train_z = torch.tensor(X_train_z, dtype=torch.float32).to(device)
 
-X_valid_z = np.load("data_models_saved/data/X_valid_z.npy")
+X_valid_z = np.load("models_saved/data/X_valid_z.npy")
 X_valid_z = torch.tensor(X_valid_z, dtype=torch.float32).to(device)
 
-X_test_z = np.load("data_models_saved/data/X_test_z.npy")
+X_test_z = np.load("models_saved/data/X_test_z.npy")
 X_test_z = torch.tensor(X_test_z, dtype=torch.float32).to(device)
 
 NumTrainSamples = X_train_z.shape[0]
