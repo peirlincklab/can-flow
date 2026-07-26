@@ -55,9 +55,9 @@ epochs = 2000
 lrate = 2e-4
 beta = 1e-2
 
-latent_dimension = 10
+latent_dimension = 50
 
-momenta = np.loadtxt("models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
