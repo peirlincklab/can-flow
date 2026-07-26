@@ -53,9 +53,9 @@ frac_train = 0.7
 frac_valid = 0.15
 epochs = 2000
 lrate = 2e-4
-beta = 1e-6
+beta = 1e-2
 
-latent_dimension = 44
+latent_dimension = 10
 
 momenta = np.loadtxt("models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
@@ -119,6 +119,10 @@ trainer = Trainer_cVAE(model=cvae, optimizer=optimizer, epochs=epochs, train_loa
 
 cvae_trained = trainer.training()
 trainer.plot_losses()
+
+### for ablation of latent dim only
+os.makedirs("ablation/ablation_latent_dimensionality", exist_ok=True)
+os.makedirs("ablation/ablation_latent_dimensionality/models_saved", exist_ok=True)
 
 torch.save(cvae_trained, f"ablation/ablation_latent_dimensionality/models_saved/cvae_model_beta_{beta}_latent_{latent_dimension}.pth")
 torch.save(cvae_trained.encoder, f"ablation/ablation_latent_dimensionality/models_saved/cvae_encoder_beta_{beta}_latent_{latent_dimension}.pth")
