@@ -46,23 +46,20 @@ metadata_sampled_all = np.concatenate((metadata_sampled_female, metadata_sampled
 metadata_sampled_all = scaler.transform(metadata_sampled_all)
 metadata_sampled_all = torch.tensor(metadata_sampled_all, dtype=torch.float32, device=device)
 
-ae_decoder = torch.load("../data_models_saved/models/ae_decoder.pth", weights_only=False)
+
+latent_dims = [10, 20, 30, 40, 50]
+betas = "0.01"
 
 
-folder_path = "../ablation/models"  # relative to project root
+for dim in latent_dims:
+    cvae_decoder = torch.load(f"../ablation/ablation_latent_dimensionality/models_saved/cvae_decoder_beta_{betas}_latent_{dim}.pth", weights_only=False)
 
-for filename in os.listdir(folder_path):
-    file_path = os.path.join(folder_path, filename)
+    latent_dist = torch.distributions.MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+    z_latent = latent_dist.sample((metadata_sampled_all.shape[0],)).to('cuda')
+    generated_momenta = cvae_decoder(z_latent, metadata_sampled_all)
 
-    model_abl = torch.load(file_path, weights_only=False)
+    generated_momenta = generated_momenta.reshape(metadata_sampled_all.shape[0], 720, 3)
+    generated_momenta = generated_momenta.detach().cpu().numpy()
 
-    z_synthetic, _ = model_abl.reverse(metadata_sampled_all)
-    generated_shapes = ae_decoder(z_synthetic)
-
-    generated_shapes = generated_shapes.reshape(metadata_sampled_all.shape[0], 720, 3)
-    generated_shapes = generated_shapes.detach().cpu().numpy()
-
-    filename_save = os.path.splitext(filename)[0]
-
-    save_write_momenta.save_momenta(type_momenta=filename_save, momenta_tosave=generated_shapes)
+    save_write_momenta.save_momenta(type_momenta=f"AblationLatentDim_cvae2_latent{dim}", momenta_tosave=generated_momenta)
 
