@@ -1,36 +1,11 @@
+import pyvista as pv
 import os
-import shutil
 from tqdm import tqdm
 
+general_path = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\Gen_Metrics_Exp_Files_Ablation"
+template_tagged = pv.read(r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\template_tagged_correct.vtk")
 
-
-def copy2clean(model_str, all_num, model_str_path):
-
-    os.makedirs(fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\Gen_Metrics_Exp_Files_Ablation\{model_str}_PCs", exist_ok=True)
-
-    pbar = tqdm(total=all_num, desc='Copy PCs to clean folder...')
-    for i in range(all_num):
-
-        vtk_src_path = fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\{model_str_path}\Shooting_Momenta_{i}\output\Shooting__GeodesicFlow__biv__tp_10__age_1.00.vtk"
-
-        new_folder_path =  fr"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\Gen_Metrics_Exp_Files_Ablation\{model_str}_PCs\PointCloud_{i}.vtk"
-
-        # Ensure source exists
-        if not os.path.exists(vtk_src_path):
-            print("WARNING: source missing:", vtk_src_path)
-            pbar.update()
-            continue
-
-        try:
-            shutil.copy(src=vtk_src_path, dst=new_folder_path)
-        except PermissionError as e:
-            print("Permission error copying to", new_folder_path, "-", e)
-        except Exception as e:
-            print("Copy failed:", e)
-
-        pbar.update()
-    pbar.close()
-
+path_tosave = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\Gen_Metrics_Exp_Files_Ablation"
 
 
 models = ['cnf_model_ablation_activation_elu_0',
@@ -77,13 +52,28 @@ models = ['cnf_model_ablation_activation_elu_0',
                'cnf_model_ablation_out_dim_conf_21_2'
           ]
 
-
-os.makedirs( r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\Gen_Metrics_Exp_Files_Ablation", exist_ok=True)
-
-num_gen = 600 ### 300 female and 300 male synthetic anatomies for each model
-
 for model in models:
-    copy2clean(model_str=model, all_num=num_gen, model_str_path=f"{model}_Momenta")
+    num_gen = 600
+    general_path_generated = general_path + rf"\{model}_PCs"
+
+    os.makedirs(path_tosave + fr'\{model}_PCs', exist_ok=True)
+
+    pbar_gen = tqdm(total=num_gen, desc='Tagging generated anatomies...', leave=True)
+    for i in range(num_gen):
+
+        mesh = pv.read(general_path_generated + f'\PointCloud_{i}.vtk')
+        mesh.cell_data['region_id'] = template_tagged.cell_data['region_id']
+
+        # save
+        mesh.save(path_tosave + rf'\{model}_PCs\PointCloud_{i}.vtk')
+
+        pbar_gen.update()
+    pbar_gen.close()
+
+
+
+
+
 
 
 

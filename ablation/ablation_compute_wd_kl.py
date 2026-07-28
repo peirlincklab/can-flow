@@ -20,30 +20,65 @@ def compute_mean_std(num_models, data):
 
 
 
-def kl_div_histogram(x, y):
-    px, bins = np.histogram(x, bins=25, density=False)
-    py, _ = np.histogram(y, bins=bins, density=False)
+def kl_div_histogram(x, y, bins=25, eps=1e-12):
+    """
+        Compute the Kullback-Leibler (KL) divergence between two one-dimensional
+        datasets using histogram-based probability estimates.
+
+        First construct a common histogram range based on the minimum
+        and maximum values across both input arrays. Then, estimate the empirical
+        probability distributions of `x` and `y` using the same bin edges, add a
+        small numerical constant to avoid division by zero, and compute the KL
+        divergence D_KL(P_x || P_y).
+
+        Parameters
+        ----------
+        x : array-like
+            First input dataset. This distribution is treated as the reference
+            distribution P_x in the KL divergence.
+        y : array-like
+            Second input dataset. This distribution is treated as the comparison
+            distribution P_y in the KL divergence.
+        bins : int, optional
+            Number of histogram bins used to estimate the probability distributions.
+            Default is 25.
+        eps : float, optional
+            Small constant added to the histogram probabilities to avoid numerical
+            issues caused by zero probabilities. Default is 1e-12.
+
+        Returns
+        -------
+        float
+            Histogram-based estimate of the KL divergence D_KL(P_x || P_y)
+        """
+    x = np.asarray(x)
+    y = np.asarray(y)
+
+    ### common bin range
+    min_val = min(x.min(), y.min())
+    max_val = max(x.max(), y.max())
+
+    px, bin_edges = np.histogram(x, bins=bins, range=(min_val, max_val), density=False)
+    py, _ = np.histogram(y, bins=bin_edges, density=False)
 
     px = px.astype(float)
     py = py.astype(float)
 
-    # normalize
     px /= px.sum()
     py /= py.sum()
 
-    # avoid zeros
-    eps = 1e-12
+    ### avoid division by zero
     px += eps
     py += eps
+
     px /= px.sum()
     py /= py.sum()
 
-    kl_xy = entropy(px, py)
-
-    return kl_xy
+    return entropy(px, py)
 
 
-input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies"
+
+input_dir_general = r"C:\Users\kkevopoulos\Documents\Meshes_Anatomies_Alternative_Branch\Ablation_anatomies\Gen_Metrics_Exp_Files_Ablation"
 
 models_dir_activation = ['cnf_model_ablation_activation_elu_0',
                          'cnf_model_ablation_activation_elu_1',
@@ -98,13 +133,13 @@ for variation, variation_str in zip(models_dirs, models_dirs_str):
 
     dfs_generated = []
     for mod_dir in variation:
-        df = compute_mass_volume(input_dir=input_dir_general + fr"\{mod_dir}_Momenta", num_samples=600)
+        df = compute_mass_volume(input_dir=input_dir_general + fr"\{mod_dir}_PCs", num_samples=600, ablation=True)
         dfs_generated.append(df)
 
 
     df_real = pd.read_pickle('../data_models_saved/data/dataframes_clinical_info/df_real_clinical.pkl')
 
-    biomarkers = ['RV_Vol_mL', 'LV_Vol_mL', 'Myo_Mass_g']
+    biomarkers = ['LV_Vol_mL', 'RV_Vol_mL', 'Myo_Mass_g', 'RVEDV_LVEDV_ratio', 'Long_axis_length', 'LV_Sphericity']
 
     wass_dict = {}
     kl_dict = {}

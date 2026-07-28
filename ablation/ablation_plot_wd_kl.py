@@ -1,6 +1,6 @@
 import pickle
 
-with open("../ablation/kl_dict_out_dim_conf.pkl", "rb") as f:
+with open("../ablation/wass_dict_out_dim_conf.pkl", "rb") as f:
     my_dict = pickle.load(f)
 
-print(my_dict['Myo_Mass_g'])
+print(my_dict['LV_Sphericity'])

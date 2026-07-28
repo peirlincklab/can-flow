@@ -67,5 +67,15 @@ for model in models:
 
                 save_write_momenta.save_momenta(type_momenta=f"AblationLatentDim_cvae3_latent{dim}", momenta_tosave=generated_momenta)
         else:
-            nf = None ### TODO TODO TODO TODO to populate
+            canflow = torch.load(f"../ablation/ablation_latent_dimensionality/models_saved/cnf_model_latent_{dim}.pth", weights_only=False)
+            ae_decoder = torch.load(f"../ablation/ablation_latent_dimensionality/models_saved/ae_decoder_latent_{dim}.pth")
+
+            z_synthetic, _ = canflow.reverse(metadata_sampled_all)
+            generated_momenta = ae_decoder(z_synthetic)
+
+            generated_momenta = generated_momenta.reshape(metadata_sampled_all.shape[0], 720, 3)
+            generated_momenta = generated_momenta.detach().cpu().numpy()
+
+            save_write_momenta.save_momenta(type_momenta=f"AblationLatentDim_canflow_latent{dim}",
+                                            momenta_tosave=generated_momenta)
 

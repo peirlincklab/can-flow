@@ -92,16 +92,19 @@ def mesh_extract_region(mesh, region_id_val):
     return subset
 
 
-def compute_mass_volume(input_dir, num_samples, real=False):
+def compute_mass_volume(input_dir, num_samples, real=False, ablation=False):
     DENSITY = 1.05
 
     if real:
         mesh_files = [input_dir+fr"\tagged_surface_{i}.vtk" for i in range(num_samples)]
     else:
-        mesh_files_female = [input_dir+fr"\tagged_surface_{i}_female.vtk" for i in range(num_samples)]
-        mesh_files_male = [input_dir + fr"\tagged_surface_{i}_male.vtk" for i in range(num_samples)]
+        if not ablation:
+            mesh_files_female = [input_dir+fr"\tagged_surface_{i}_female.vtk" for i in range(num_samples)]
+            mesh_files_male = [input_dir + fr"\tagged_surface_{i}_male.vtk" for i in range(num_samples)]
 
-        mesh_files = mesh_files_female + mesh_files_male
+            mesh_files = mesh_files_female + mesh_files_male
+        else:
+            mesh_files = [input_dir + fr"\PointCloud_{i}.vtk" for i in range(num_samples)]
 
     results = []
 
