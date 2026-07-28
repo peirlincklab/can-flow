@@ -47,9 +47,9 @@ frac_valid = 0.15
 epochs = 2000
 lrate = 2e-4
 
-latent_dimension = 10
+latent_dimension = 50
 
-momenta = np.loadtxt("../data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
@@ -57,7 +57,7 @@ momenta = momenta.reshape((2274, 720, 3))
 ### Exclude outliers and participants that withdrew from the study
 momenta = np.delete(momenta, [1746, 1831], axis=0)
 
-outliers = np.load('../utils/outliers_indices.npy')
+outliers = np.load('utils/outliers_indices.npy')
 mask = np.ones(momenta.shape[0], dtype=bool)
 mask[outliers] = False
 
@@ -96,7 +96,7 @@ trainer = TrainerAE(model=Convol_ae, optimizer=optimizer, epochs=epochs,
 Convol_ae = trainer.training()
 trainer.plot_losses()
 
-torch.save(Convol_ae, f"../ablation/ablation_latent_dimensionality/models_saved/ae_model_latent_{latent_dimension}.pth")
-torch.save(Convol_ae.encoder, f"../ablation/ablation_latent_dimensionality/models_saved/ae_encoder_latent_{latent_dimension}.pth")
-torch.save(Convol_ae.decoder, f"../ablation/ablation_latent_dimensionality/models_saved/ae_decoder_latent_{latent_dimension}.pth")
+torch.save(Convol_ae, f"ablation/ablation_latent_dimensionality/models_saved/ae_model_latent_{latent_dimension}.pth")
+torch.save(Convol_ae.encoder, f"ablation/ablation_latent_dimensionality/models_saved/ae_encoder_latent_{latent_dimension}.pth")
+torch.save(Convol_ae.decoder, f"ablation/ablation_latent_dimensionality/models_saved/ae_decoder_latent_{latent_dimension}.pth")
 
