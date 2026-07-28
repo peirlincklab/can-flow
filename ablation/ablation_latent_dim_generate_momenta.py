@@ -48,18 +48,24 @@ metadata_sampled_all = torch.tensor(metadata_sampled_all, dtype=torch.float32, d
 
 
 latent_dims = [10, 20, 30, 40, 50]
-betas = "0.01"
+betas = ["0.01", "0.001"]
 
+models = ["can-flow", "cvae"]
 
-for dim in latent_dims:
-    cvae_decoder = torch.load(f"../ablation/ablation_latent_dimensionality/models_saved/cvae_decoder_beta_{betas}_latent_{dim}.pth", weights_only=False)
+for model in models:
+    for dim in latent_dims:
+        if model == "cvae":
+            for beta in betas:
+                cvae_decoder = torch.load(f"../ablation/ablation_latent_dimensionality/models_saved/cvae_decoder_beta_{beta}_latent_{dim}.pth", weights_only=False)
 
-    latent_dist = torch.distributions.MultivariateNormal(torch.zeros(dim), torch.eye(dim))
-    z_latent = latent_dist.sample((metadata_sampled_all.shape[0],)).to('cuda')
-    generated_momenta = cvae_decoder(z_latent, metadata_sampled_all)
+                latent_dist = torch.distributions.MultivariateNormal(torch.zeros(dim), torch.eye(dim))
+                z_latent = latent_dist.sample((metadata_sampled_all.shape[0],)).to('cuda')
+                generated_momenta = cvae_decoder(z_latent, metadata_sampled_all)
 
-    generated_momenta = generated_momenta.reshape(metadata_sampled_all.shape[0], 720, 3)
-    generated_momenta = generated_momenta.detach().cpu().numpy()
+                generated_momenta = generated_momenta.reshape(metadata_sampled_all.shape[0], 720, 3)
+                generated_momenta = generated_momenta.detach().cpu().numpy()
 
-    save_write_momenta.save_momenta(type_momenta=f"AblationLatentDim_cvae2_latent{dim}", momenta_tosave=generated_momenta)
+                save_write_momenta.save_momenta(type_momenta=f"AblationLatentDim_cvae3_latent{dim}", momenta_tosave=generated_momenta)
+        else:
+            nf = None ### TODO TODO TODO TODO to populate
 
