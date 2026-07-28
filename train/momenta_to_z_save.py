@@ -6,7 +6,7 @@ import torch
 ### This file encodes real momenta into the latent space using the CAN-FLOW autoencoder, and saves the latent representations
 device = 'cuda'
 
-momenta = np.loadtxt("models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
+momenta = np.loadtxt("data_models_saved/data/DeterministicAtlas__EstimatedParameters__Momenta.txt")
 
 momenta = np.delete(momenta, 0, axis=0)
 momenta = momenta.reshape((2274, 720, 3))
@@ -40,7 +40,7 @@ X_valid_momenta = torch.tensor(X_valid_momenta, dtype=torch.float32).to(device)
 X_test_momenta = torch.tensor(X_test_momenta, dtype=torch.float32).to(device)
 
 ### comment this line if ablation of latent dimensionality is not performed
-latent_dim = 44
+latent_dim = 50
 conv_encoder = torch.load(f"ablation/ablation_latent_dimensionality/models_saved/ae_encoder_latent_{latent_dim}.pth", weights_only=False)
 conv_encoder.eval()
 
@@ -56,6 +56,6 @@ z_latent_train = z_latent_train.detach().cpu().numpy()
 z_latent_valid = z_latent_valid.detach().cpu().numpy()
 z_latent_test = z_latent_test.detach().cpu().numpy()
 
-np.save('models_saved/data/X_train_z.npy', z_latent_train)
-np.save('models_saved/data/X_valid_z.npy', z_latent_valid)
-np.save('models_saved/data/X_test_z.npy', z_latent_test)
+np.save(f'ablation/ablation_latent_dimensionality/models_saved/X_train_z_{latent_dim}.npy', z_latent_train)
+np.save(f'ablation/ablation_latent_dimensionality/models_saved/X_valid_z_{latent_dim}.npy', z_latent_valid)
+np.save(f'ablation/ablation_latent_dimensionality/models_saved/X_test_z_{latent_dim}.npy', z_latent_test)

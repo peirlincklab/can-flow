@@ -70,13 +70,15 @@ frac_valid = 0.15
 epochs = 1200
 lrate = 2.5e-4
 
-X_train_z = np.load("models_saved/data/X_train_z.npy")
+dim_latent = 50
+
+X_train_z = np.load(f"ablation/ablation_latent_dimensionality/models_saved/X_train_z_{dim_latent}.npy")
 X_train_z = torch.tensor(X_train_z, dtype=torch.float32).to(device)
 
-X_valid_z = np.load("models_saved/data/X_valid_z.npy")
+X_valid_z = np.load(f"ablation/ablation_latent_dimensionality/models_saved/X_valid_z_{dim_latent}.npy")
 X_valid_z = torch.tensor(X_valid_z, dtype=torch.float32).to(device)
 
-X_test_z = np.load("models_saved/data/X_test_z.npy")
+X_test_z = np.load(f"ablation/ablation_latent_dimensionality/models_saved/X_test_z_{dim_latent}.npy")
 X_test_z = torch.tensor(X_test_z, dtype=torch.float32).to(device)
 
 NumTrainSamples = X_train_z.shape[0]
@@ -89,8 +91,8 @@ X_train_confounders = torch.tensor(X_train_confounders, dtype=torch.float32).to(
 X_valid_confounders = torch.tensor(X_valid_confounders, dtype=torch.float32).to(device)
 
 
-dim_latent = X_train_z.shape[1]
-print(f"Latent dimension is: {dim_latent}")
+#dim_latent = X_train_z.shape[1]
+#print(f"Latent dimension is: {dim_latent}")
 
 
 dataset_train = Data(X=X_train_z, y=X_train_confounders)
