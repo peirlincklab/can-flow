@@ -53,6 +53,9 @@ def visualize_1d_pca(real_rb, cnf_rb, cvae_rb, num_toplot):
         synthetic_nf = cnf_rb[i]
         synthetic_vae = cvae_rb[i]
 
+        print(f"Mode {i}: CAN-FLOW WD: {wasserstein_distance(reference, synthetic_nf)}")
+        print(f"Mode {i}: cVAE WD: {wasserstein_distance(reference, synthetic_vae)}")
+
         kde_ref = gaussian_kde(reference)
         x_ref = np.linspace(min(reference), max(reference), reference.shape[0])
         d_ref = kde_ref(x_ref)
@@ -369,38 +372,38 @@ num_coeffs_visual = 65
 
 
 ### Variability experiment
-plt.figure(figsize=(7, 6))
-for i in range(len(results)):
-
-    if i == 0:
-        color = "#D55E00"
-        label = 'CAN-DO'
-    elif i == 1:
-        color = '#0072B2'
-        label = r'$\beta=10^{-2}$'
-    elif i == 2:
-        color = "#56B4E9"
-        label = r'$\beta=10^{-3}$'
-
-    mean = np.array(real_mean[:num_coeffs_visual]) / np.array(results[i][0][:num_coeffs_visual])
-    minus_std = np.array(real_mean[:num_coeffs_visual] - real_std[:num_coeffs_visual]) / np.array(results[i][0][:num_coeffs_visual]-results[i][1][:num_coeffs_visual])
-    plus_std = np.array(real_mean[:num_coeffs_visual] + real_std[:num_coeffs_visual]) / np.array(results[i][0][:num_coeffs_visual]+results[i][1][:num_coeffs_visual])
-
-    line, = plt.plot(mean, color=color, linewidth=3)
-    line.set_clip_on(True)
-    plt.fill_between(np.arange(num_coeffs_visual), minus_std, plus_std, color=color, alpha=0.25, clip_on=True, rasterized=True)
-
-
-
-plt.axhline(y=1, color='black', linestyle='--', linewidth=5)
-plt.yscale("log")
-# plt.xscale("log")
-# plt.xlabel('PCA coefficients')
-# plt.ylabel(r"$\frac{WD(\mathbf{X}_1, \mathbf{X}_2)}{WD(\mathbf{X}_1, \tilde{\mathbf{X}}_{\text{gen}})}$")
-plt.xticks([10, 20, 30, 40, 50, 60])
-plt.grid(True)
-plt.savefig('../figures_experiments/pca_experiment/variability_exp_allcoeffs.svg')
-plt.close()
+# plt.figure(figsize=(7, 6))
+# for i in range(len(results)):
+#
+#     if i == 0:
+#         color = "#D55E00"
+#         label = 'CAN-DO'
+#     elif i == 1:
+#         color = '#0072B2'
+#         label = r'$\beta=10^{-2}$'
+#     elif i == 2:
+#         color = "#56B4E9"
+#         label = r'$\beta=10^{-3}$'
+#
+#     mean = np.array(real_mean[:num_coeffs_visual]) / np.array(results[i][0][:num_coeffs_visual])
+#     minus_std = np.array(real_mean[:num_coeffs_visual] - real_std[:num_coeffs_visual]) / np.array(results[i][0][:num_coeffs_visual]-results[i][1][:num_coeffs_visual])
+#     plus_std = np.array(real_mean[:num_coeffs_visual] + real_std[:num_coeffs_visual]) / np.array(results[i][0][:num_coeffs_visual]+results[i][1][:num_coeffs_visual])
+#
+#     line, = plt.plot(mean, color=color, linewidth=3)
+#     line.set_clip_on(True)
+#     plt.fill_between(np.arange(num_coeffs_visual), minus_std, plus_std, color=color, alpha=0.25, clip_on=True, rasterized=True)
+#
+#
+#
+# plt.axhline(y=1, color='black', linestyle='--', linewidth=5)
+# plt.yscale("log")
+# # plt.xscale("log")
+# # plt.xlabel('PCA coefficients')
+# # plt.ylabel(r"$\frac{WD(\mathbf{X}_1, \mathbf{X}_2)}{WD(\mathbf{X}_1, \tilde{\mathbf{X}}_{\text{gen}})}$")
+# plt.xticks([10, 20, 30, 40, 50, 60])
+# plt.grid(True)
+# plt.savefig('../figures_experiments/pca_experiment/variability_exp_allcoeffs.svg')
+# plt.close()
 
 
 
@@ -415,74 +418,74 @@ visualize_1d_pca(real_rb=reference_dists_rb, cnf_rb=models_dists_rb[0],
 
 
 ### Figure 3 --- Variability experiment with respect to sex
-x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
-x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
-                    'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
-x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
-x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, False: 0})
-x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
-x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
-x_confounders = x_confounders.to_numpy()
-
-### Delete outliers and participants that withdrew from the study
-x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
-x_confounders = x_confounders[mask]
-
-sex_info = x_confounders[:, 2]
-male_indices = np.where(sex_info.flatten() == 0)[0]
-female_indices = np.where(sex_info.flatten() == 1)[0]
-
-real_momenta_male = momenta_reference[:, male_indices]
-real_momenta_female = momenta_reference[:, female_indices]
-
-x1r_rb, x2r_rb = PCA(reference_group=real_momenta_male, generated_group=real_momenta_female,
-                       num_components=num_components_pca)
-
-wd_real_list = []
-for k in range(num_components_pca):
-    wd = wasserstein_distance(x1r_rb[k], x2r_rb[k])
-    wd_real_list.append(wd)
-
-models = ['nf', 'vae2', 'vae3']
-wd_gen_lists_all = []
-for model in models:
-    path_female = path_generated + "\Female_gen_" + model + "_Momenta"
-    path_male = path_generated + "\Male_gen_" + model + "_Momenta"
-
-    momenta_female = load_momenta(path_init=path_female, num_momenta_samples=300)
-    momenta_female = momenta_female.transpose(1, 2, 0)
-    momenta_female = momenta_female.reshape(720 * 3, -1)
-
-
-    momenta_male = load_momenta(path_init=path_male, num_momenta_samples=300)
-    momenta_male = momenta_male.transpose(1, 2, 0)
-    momenta_male = momenta_male.reshape(720 * 3, -1)
-
-
-    ### PCA between real subset X1 and synthetic momenta
-    x1g_rb, x2g_rb = PCA(reference_group=real_momenta_male, generated_group=momenta_female,
-                                    num_components=num_components_pca)
-
-    wd_gen_list = []
-    for k in range(num_components_pca):
-        wd = wasserstein_distance(x1g_rb[k], x2g_rb[k])
-        wd_gen_list.append(wd)
-
-    wd_gen_lists_all.append(wd_gen_list)
-
-
-plt.figure(figsize=(7, 6))
-plt.plot(np.array(wd_real_list[:num_coeffs_visual]) / np.array(wd_gen_lists_all[0][:num_coeffs_visual]), color="#D55E00", linewidth=3)
-plt.axhline(y=1, color='black', linestyle='--', linewidth=5)
-plt.plot(np.array(wd_real_list[:num_coeffs_visual]) / np.array(wd_gen_lists_all[1][:num_coeffs_visual]), color='#0072B2', linewidth=3)
-plt.plot(np.array(wd_real_list[:num_coeffs_visual]) / np.array(wd_gen_lists_all[2][:num_coeffs_visual]), color="#56B4E9", linewidth=3)
-plt.xticks([10, 20, 30, 40, 50, 60])
-plt.grid(True)
-
-
-plt.yscale("log")
-# plt.xlabel('PCA coefficients')
-# plt.ylabel(r"$\frac{WD(\mathbf{X}^m, \mathbf{X}^f)}{WD(\mathbf{X}^m, \tilde{\mathbf{X}}^f_{\text{gen}})}$")
-plt.savefig('../figures_experiments/pca_experiment/variability_exp_sex_allcoeffs.svg')
-
+# x_confounders = pd.read_excel(r"/home/kevopou1/metadata_final.xlsx")
+# x_confounders.drop(['Participant ID', 'Height', 'Weight', 'Diastolic BP',
+#                     'Systolic BP', 'Unnamed: 8', 'Unnamed: 9', 'subject_id'], axis=1, inplace=True)
+# x_confounders = pd.get_dummies(x_confounders, columns=['Sex'])
+# x_confounders['Sex_Female'] = x_confounders['Sex_Female'].replace({True: 1, False: 0})
+# x_confounders['Sex_Male'] = x_confounders['Sex_Male'].replace({True: 1, False: 0})
+# x_confounders = x_confounders[['BMI', 'Age', 'Sex_Female', 'Sex_Male']]
+# x_confounders = x_confounders.to_numpy()
+#
+# ### Delete outliers and participants that withdrew from the study
+# x_confounders = np.delete(x_confounders, [1746, 1831], axis=0)
+# x_confounders = x_confounders[mask]
+#
+# sex_info = x_confounders[:, 2]
+# male_indices = np.where(sex_info.flatten() == 0)[0]
+# female_indices = np.where(sex_info.flatten() == 1)[0]
+#
+# real_momenta_male = momenta_reference[:, male_indices]
+# real_momenta_female = momenta_reference[:, female_indices]
+#
+# x1r_rb, x2r_rb = PCA(reference_group=real_momenta_male, generated_group=real_momenta_female,
+#                        num_components=num_components_pca)
+#
+# wd_real_list = []
+# for k in range(num_components_pca):
+#     wd = wasserstein_distance(x1r_rb[k], x2r_rb[k])
+#     wd_real_list.append(wd)
+#
+# models = ['nf', 'vae2', 'vae3']
+# wd_gen_lists_all = []
+# for model in models:
+#     path_female = path_generated + "\Female_gen_" + model + "_Momenta"
+#     path_male = path_generated + "\Male_gen_" + model + "_Momenta"
+#
+#     momenta_female = load_momenta(path_init=path_female, num_momenta_samples=300)
+#     momenta_female = momenta_female.transpose(1, 2, 0)
+#     momenta_female = momenta_female.reshape(720 * 3, -1)
+#
+#
+#     momenta_male = load_momenta(path_init=path_male, num_momenta_samples=300)
+#     momenta_male = momenta_male.transpose(1, 2, 0)
+#     momenta_male = momenta_male.reshape(720 * 3, -1)
+#
+#
+#     ### PCA between real subset X1 and synthetic momenta
+#     x1g_rb, x2g_rb = PCA(reference_group=real_momenta_male, generated_group=momenta_female,
+#                                     num_components=num_components_pca)
+#
+#     wd_gen_list = []
+#     for k in range(num_components_pca):
+#         wd = wasserstein_distance(x1g_rb[k], x2g_rb[k])
+#         wd_gen_list.append(wd)
+#
+#     wd_gen_lists_all.append(wd_gen_list)
+#
+#
+# plt.figure(figsize=(7, 6))
+# plt.plot(np.array(wd_real_list[:num_coeffs_visual]) / np.array(wd_gen_lists_all[0][:num_coeffs_visual]), color="#D55E00", linewidth=3)
+# plt.axhline(y=1, color='black', linestyle='--', linewidth=5)
+# plt.plot(np.array(wd_real_list[:num_coeffs_visual]) / np.array(wd_gen_lists_all[1][:num_coeffs_visual]), color='#0072B2', linewidth=3)
+# plt.plot(np.array(wd_real_list[:num_coeffs_visual]) / np.array(wd_gen_lists_all[2][:num_coeffs_visual]), color="#56B4E9", linewidth=3)
+# plt.xticks([10, 20, 30, 40, 50, 60])
+# plt.grid(True)
+#
+#
+# plt.yscale("log")
+# # plt.xlabel('PCA coefficients')
+# # plt.ylabel(r"$\frac{WD(\mathbf{X}^m, \mathbf{X}^f)}{WD(\mathbf{X}^m, \tilde{\mathbf{X}}^f_{\text{gen}})}$")
+# plt.savefig('../figures_experiments/pca_experiment/variability_exp_sex_allcoeffs.svg')
+#
 
