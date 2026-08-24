@@ -1,0 +1,12 @@
+joblib==1.5.3
+matplotlib==3.11.1
+numpy==2.5.2
+pandas==3.0.5
+pot==0.9.6.post1
+pyvista==0.48.4
+scikit_learn==1.9.0
+scipy==1.18.1
+seaborn==0.13.2
+torch==2.5.1+cu118
+torch_cluster==1.6.3+pt25cu118
+tqdm==4.67.1
