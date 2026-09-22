@@ -37,6 +37,9 @@ CAN-FLOW generates synthetic momenta that should be transformed to synthetic ana
 To illustrate the training and generation workflow of CAN-FLOW, we construct a **synthetic, non-realistic dataset** by sampling from the principal components of biventricular anatomy provided by the [**Cardiac Atlas Project**](https://www.cardiacatlas.org/). More details on the PCA model and the corresponding principal components can be found in [https://www.cardiacatlas.org/biventricular-modes/](https://www.cardiacatlas.org/biventricular-modes/).
 
 Each sampled synthetic anatomy is also assigned an **artificial combination of metadata characteristics, including sex, age, and BMI**. These anatomy–metadata pairs are not intended to represent physiologically realistic subjects. Instead, they are used solely to demonstrate how CAN-FLOW can be trained and subsequently used for conditional generation when a user has access to a real dataset of biventricular cardiac anatomies and associated metadata.
+
+## How to use?
+
 ## Contact
 
 For questions, suggestions, or collaborations, please contact:
