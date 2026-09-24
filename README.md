@@ -28,17 +28,25 @@ This repository contains:
 - Illustrative script to showcase how to train CAN-FLOW
 - Illustrative script to showcase how to generate synthetic cardiac anatomies according to sex, age, and BMI, using a trained instance of CAN-FLOW
 
-The scripts assume user access to a dataset of cardiac anatomies, and the corresponding metadata. 
-The training script is designed to be run **after** [Deformetrica's](https://gitlab.com/icm-institute/aramislab/deformetrica/) LDDMM-based anatomical mapping, **which results in the momenta representation of cardiac anatomies**.
-This is because the CAN-FLOW autoencoder is designed to operate on this momenta representation. 
-CAN-FLOW generates synthetic momenta that should be transformed to synthetic anatomies using **Deformetrica's *geodesic shooting* process**. This step has to be performed by the user and is not included in the repository. 
+## How to use:
+To train and use the CAN-FLOW generative model, the user should have access to a dataset of cardiac anatomies, and the corresponding metadata. 
+For this version of the model, the anatomical representation should be the subject-specific 3D momenta vector field obtained by the *anatomical mapping of LDDMM, implemented in [Deformetrica]((https://gitlab.com/icm-institute/aramislab/deformetrica/))*.
 
+### Training
+Input to CAN-FLOW should be the momenta representations and the metadata.
 
-To illustrate the training and generation workflow of CAN-FLOW, we construct a **synthetic, non-realistic dataset** by sampling from the principal components of biventricular anatomy provided by the [**Cardiac Atlas Project**](https://www.cardiacatlas.org/). More details on the PCA model and the corresponding principal components can be found in [https://www.cardiacatlas.org/biventricular-modes/](https://www.cardiacatlas.org/biventricular-modes/).
+- If we encode each anatomy with 720 momenta vectors, the first input is a `torch.tensor` with dimensions `(num_anatomies, 720, 3)`. We reshape the tensor to another one with dimensions `(num_anatomies, 3, 8, 9, 10)`. This is given as input to the convolutional autoencoder as the first step of the training. After training the autoencoder, the latent representations are in a `torch.tensor` with dimension`(num_anatomies, 44)`, where 44 is the chosen latent dimensionality. This is then given as input to the normalizing flow, along with the metadata.  
 
-Each sampled synthetic anatomy is also assigned an **artificial combination of metadata characteristics, including sex, age, and BMI**. These anatomy–metadata pairs are not intended to represent physiologically realistic subjects. Instead, they are used solely to demonstrate how CAN-FLOW can be trained and subsequently used for conditional generation when a user has access to a real dataset of biventricular cardiac anatomies and associated metadata.
+- The metadata input to the normalizing flow is a `torch.tensor`  with dimensions `(num_anatomies, 4)`. One metadata instance is `[BMI, age, sex_female, sex_male]`, where we one-hot-encode females and males as explained in the manuscript.
 
-## How to use?
+In the [\train](train) folder, we provide the training scripts we used to train the autoencoder and normalizing flow. However, small modifications of those scripts by the user are also acceptable. 
+
+### Generation 
+In its current version, the model generates synthetic 3D momenta vectors, not meshes directly.The synthetic momenta should be transformed to synthetic anatomies using **Deformetrica's *geodesic shooting* process**.
+This step has to be performed by the user and is not included in the repository. As with training, the generation includes **two steps**:
+
+1. We give the desired metadata (`torch.tensor`  with dimensions `(num_subjects, 4)`) as input to the trained normalizing flow. The flow then generates synthetic latent representations.
+2. We decode the latent representations using the trained decoder, and obtain synthetic 3D momenta (`torch.tensor` with dimensions `(num_anatomies, 3, 8, 9, 10)`). We reshape the output to dimensions (`(num_anatomies, 720, 3)`), write it in `.txt` file, and perform [Deformetrica's geodesic shooting](https://gitlab.com/icm-institute/aramislab/deformetrica/-/blob/master/deformetrica/core/models/geodesic_regression.py?ref_type=heads).
 
 ## Contact
 
