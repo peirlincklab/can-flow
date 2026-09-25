@@ -24,6 +24,7 @@ When using, please cite:
 ## Contents
 
 This repository contains:
+- Examples of synthetic virtual cohorts of biventricular anatomies for subjects with different metadata characteristics 
 - The architecture of the CAN-FLOW generative model, and the cVAE used as a baseline for comparison (for details, we refer the reader to the [manuscript](https://arxiv.org/pdf/2608.09460))
 - Illustrative script to showcase how to train CAN-FLOW
 - Illustrative script to showcase how to generate synthetic cardiac anatomies according to sex, age, and BMI, using a trained instance of CAN-FLOW
