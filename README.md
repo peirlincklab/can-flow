@@ -54,6 +54,7 @@ The corresponding synthetic surface meshes are available in [`synthetic_example_
 
 **If you are interested in larger synthetic cohorts or cohorts conditioned on specific metadata configurations, please feel free to contact us. 
 We would be happy to generate additional cohorts tailored to your use case.**
+![](git_figure_example_synthetic_anatomies.png)
 
 
 ### Training
