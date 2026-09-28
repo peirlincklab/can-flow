@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+title: "CAN-FLOW"
+message: >
+  If you use CAN-FLOW in academic work, please cite the associated
+  publication listed under preferred-citation.
+type: software
+authors:
+  - family-names: Kevopoulos
+    given-names: Konstantinos
+  - family-names: Moscoloni
+    given-names: Beatrice
+  - family-names: Alheit
+    given-names: Benjamin
+  - family-names: Beeche
+    given-names: Cameron
+  - family-names: Chirinos
+    given-names: Julio A.
+  - family-names: Heinlein
+    given-names: Alexander
+  - family-names: Peirlinck
+    given-names: Mathias
+repository-code: "https://github.com/peirlincklab/can-flow"
+license: Apache-2.0
+
+preferred-citation:
+  type: article
+  title: "Flow-based conditional cardiac anatomy generation for virtual cohorts"
+  authors:
+    - family-names: Kevopoulos
+      given-names: Konstantinos
+    - family-names: Moscoloni
+      given-names: Beatrice
+    - family-names: Alheit
+      given-names: Benjamin
+    - family-names: Beeche
+      given-names: Cameron
+    - family-names: Chirinos
+      given-names: Julio A.
+    - family-names: Heinlein
+      given-names: Alexander
+    - family-names: Peirlinck
+      given-names: Mathias
+  doi: "10.48550/arXiv.2608.09460"
+  year: 2026
