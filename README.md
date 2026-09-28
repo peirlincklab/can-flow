@@ -1,4 +1,4 @@
-# CAN-FLOW: Flow-based conditional cardiac anatomy generation for virtual cohorts
+# CAN-FLOW: Flow-based conditional anatomy generation for virtual cohorts
 ![](can-flow_visual.png)
 
 This repository is the official implementation of the paper
@@ -10,17 +10,19 @@ CAN-FLOW is a **conditional generative model of cardiac anatomy**, based on norm
 In the first step, CAN-FLOW learns geometry-only latent representations of diffeomorphic cardiac shape momenta. As a second step, the sex-, age-, and body-mass-index-dependent distribution of those latent representations
 is modelled with a conditional normalizing flow. We refer to the sex, age, and BMI conditioning information as **the metadata**. 
 
-When using, please cite:
-
+**Citation**
+If you use CAN-FLOW or build upon this code, please cite:
 ~~~bibtex
 @article{kevopoulos2026flow,
   title={Flow-based conditional cardiac anatomy generation for virtual cohorts},
   author={Kevopoulos, Konstantinos and Moscoloni, Beatrice and Alheit, Benjamin and Beeche, Cameron and Chirinos, Julio A and Heinlein, Alexander and Peirlinck, Mathias},
-  doi={10.48550/arXiv.2608.09460}
+  doi={10.48550/arXiv.2608.09460},
   journal={arXiv preprint arXiv:2608.09460},
   year={2026}
 }
 ~~~
+Citation metadata are provided in `CITATION.cff`.
+
 ## Contents
 
 This repository contains:
